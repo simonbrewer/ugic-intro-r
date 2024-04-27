@@ -1,0 +1,31 @@
+---
+title: 'UGIC R Workshop (May 06 2024)'
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+author:
+  - Simon Brewer^[University of Utah, simon.brewer@geog.utah.edu]
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    theme: flatly
+    df_print: paged
+    number_sections: false
+    toc: false
+    toc_float: false
+---
+
+# Agenda
+
+- General introduction
+- [Introduction to R][intro_R]
+
+# Data
+
+https://github.com/simonbrewer/ugic-intro-r/blob/main/docs/UGIC_Workshop_01_Intro_R.html
+
+All files for the hands-on exercises can be found here LINK DEAD
+
+[intro_R]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_01_Intro_R.html
