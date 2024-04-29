@@ -17,6 +17,10 @@ output:
     toc_float: false
 ---
 
+# Installation instructions
+
+Tips on installing R and RStudio [here][install]
+
 # Agenda
 
 - General introduction
@@ -24,8 +28,7 @@ output:
 
 # Data
 
-https://github.com/simonbrewer/ugic-intro-r/blob/main/docs/UGIC_Workshop_01_Intro_R.html
-
 All files for the hands-on exercises can be found here LINK DEAD
 
+[install]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_00_Installation.html
 [intro_R]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_01_Intro_R.html
