@@ -491,6 +491,7 @@ penguin %>%
 ```
 
 Filter for female penguins from Biscoe and Torgensen islands
+
 ```{r results='hide'}
 penguin %>%
   filter(sex == "female", island %in% c("Biscoe","Torgensen"))
@@ -502,6 +503,17 @@ Note that there is also a `slice()` function, which simply extracts rows accordi
 penguin %>%
   slice(1:10)
 ```
+
+## Using multiple functions
+
+The real power of **dplyr** comes when you start to combine functions. For example here, we'll extract just the body mass and species name for the penguins from Dream island:
+
+```{r results='hide'}
+penguin %>%
+  filter(island  == "Dream") %>%
+  select(species, body_mass_g)
+```
+
 
 ## The `arrange()` function
 
@@ -523,77 +535,63 @@ penguin %>%
 
 Note that you can add additional variable names to `arrange()` to sort on consecutive columns. 
 
-## Using multiple functions
-
-The real power of **dplyr** comes when you start 
-
-Now, we will select four columns from the dataset, arrange the rows by the life expectancy then pass this to `head()` to show the first few rows:
+Now, we will filter for female penguins, select four columns from the dataset, arrange the rows by the increasing body_mass then pass this to `head()` to show the first few rows:
 
 ```{r results='hide'}
-gap %>% 
-  select(country, year, lifeExp, gdpPercap) %>%
-  arrange(lifeExp) %>%
+penguin %>% 
+  filter(sex == "female") %>%
+  select(island, year, body_mass_g, flipper_length_mm) %>%
+  arrange(body_mass_g) %>%
   head()
 ```
 
-Now do the same, but only filter for the year 2002
+
+## The `distinct()` function 
+
+The function `distinct()` will return the unique values of a vector, so to get the list of islands in the `penguin` data set
 
 ```{r results='hide'}
-gap %>% 
-  select(country, year, lifeExp, gdpPercap) %>%
-  filter(year == 2002) %>%
-  arrange(lifeExp) %>%
+penguin %>%
+  distinct(island)
+```
+
+So, if we want the list of islands that have female penguins with over 4000 g body mass:
+
+```{r results='hide'}
+penguin %>%
+  filter(sex == "female", body_mass_g > 4000) %>%
+  distinct(island)
+```
+
+## The `mutate()` function 
+
+This function can be used to add new columns to the data frame. We'll use this to create a new column of with the body mass in kilograms:
+
+```{r results='hide'}
+penguin %>% 
+  select(island, body_mass_g) %>%
+  mutate(body_mass_kg = body_mass_g / 1000)
+```
+
+And let's sort by this by weight to find the islands with the highest masses:
+
+```{r results='hide'}
+penguin %>% 
+  select(island, body_mass_g) %>%
+  mutate(body_mass_kg = body_mass_g / 1000) %>%
+  arrange(desc(body_mass_kg)) %>%
   head()
 ```
 
-Or to do the same, but ordered by GDP:
-```{r results='hide'}
-gap %>% 
-  select(country, year, lifeExp, gdpPercap) %>%
-  filter(year == 2002) %>%
-  arrange(gdpPercap) %>%
-  head()
-```
-
-Repeat this, but sort the GDP in descending order. For this, we can use the function `desc()`:
+Note that this does **not** add the column to the original dataframe, unless you assign the output:
 
 ```{r results='hide'}
-gap %>% 
-  select(country, year, lifeExp, gdpPercap) %>%
-  filter(year == 2002) %>%
-  arrange(desc(gdpPercap)) %>%
-  head()
+penguin <- penguin %>% 
+  mutate(body_mass_kg = body_mass_g / 1000)
+names(penguin)
 ```
 
-## Factors 
-
-The vector of species names (`penguin$species`) is a set of character strings. R has another data type, a **factor** used to represent groups within your data. With a factor, R automatically assumes that every observation with the same name or *level* belongs to a single group, which can greatly facilitate comparing values between groups 
-
-You can convert a vector of character strings to a factor with the `as.factor()` function. The following code replaces the original `species` string with factor:
-
-```{r}
-penguin$species <- as.factor(penguin$species)
-```
-
-Now let's recheck the class:
-
-```{r}
-class(penguin$species)
-```
-
-If we now check the first 10 values, you will see some additional information showing the levels of the factor, i.e. the individual groups. 
-
-```{r}
-penguin$species[1:10]
-```
-
-R automatically sets the levels in alphabetical order, irrespective of the order in the vector. The first level is considered to be the reference level, which has some uses in regression model as we will see later. You can change the order of the levels using the `factor()` function. The following sets the species `Gentoo` as the reference:
-
-```{r eval=FALSE}
-factor(penguin$species, levels = c("Gentoo", "Chinstrap", "Adelie"))
-```
-
-We will look further at how factors work in a later lab. 
+We'll look at a couple of other **dplyr** functions, shortly, but first, we'll explore what an R function.
 
 # Functions in R
 
@@ -604,153 +602,160 @@ sqrt(5)
 ```
 
 Note that we can use the assignment operator to save the output from a function, allowing you to use this in subsequent functions and analyses. 
+
 ```{r}
 y <- sqrt(5)
 round(y)
 ```
 
 To save time and code, functions can be combined:
+
 ```{r}
 round(sqrt(5))
 ```
 
-The `seq()` function produces a series of numbers on a regular step. By default, it require 3 parameters, the starting number, the ending number and the step.
+Most functions take a series of *arguments* that control the way they work. As an example, we'll look at the `seq()` function, which produces a series of numbers on a regular step. By default, it require 3 arguments, the starting number, the ending number and the step.
+
 ```{r}
 seq(from = 0, to = 20, by = 2)
 ```
 
-If you include the parameter names, as in this example, the order does not matter. The parameter names can be omitted if you keep to the specified order of parameters. So `seq(0,20,2)` will give you the equivalent results.
+If you include the argument names, as in this example, the order does not matter. The argument names can be omitted if you keep to the specified order of arguments So `seq(0,20,2)` will give you the equivalent results.
 
-To find out what these parameters are, what they are called and what values they take, use the `help()` function, e.g. `help(seq)`. This will open a window with the help file for that function. If you do not know the name of a function, there is a search function `help.search()`, or use the help browser `help.start()`, browse to packages or use the search engine.
+To find out what these arguments are, what they are called and what values they take, use the `help()` function, e.g. `help(seq)` or just `?seq`. This will open a window with the help file for that function. If you do not know the name of a function, there is a search function `help.search()`, or use the help browser `help.start()`; browse to packages or use the search engine.
 
 ## Univariate statistics
 
-Now create two new vectors in R containing the list of bill lengths and the list of species names. Note the use of the assignment operator `<-`. You can also use the equal sign  (`=`) here and elsewhere in these examples.
+R has a large number of inbuilt functions. This section is designed to simply introduce you to the some basic functions for estimating simple univariate statistics We'll start by simply calculating the mean of the bill length values
 
 ```{r}
-bl <- penguin$bill_length_mm
-sp <- penguin$species
-```
-
-R has a large number of inbuilt functions. This section is designed to simply introduce you to the some basic functions for describing data. We'll start by simply calculating the mean of the bill length values
-
-```{r}
-mean(bl)
+mean(penguin$bill_length_mm)
 ```
 
 This returns the value `NA`, rather than a mean length. So what went wrong? In the original set of data, there are some missing values, also denoted by `NA`. 
 
 ```{r}
-bl[1:15]
+penguin$bill_length_mm[1:15]
 ```
 
 R's default for most functions is to not calculate values when there are missing observations. This is really to alert you to the fact that the data are incomplete, and the value you would obtain might be biased. You can overrule this by adding the argument `na.rm=TRUE` to the following functions. This removes `NA`s and calculates the value with whatever is leftover.
 
 Functions to describe the central tendency:
+
 ```{r}
-mean(bl, na.rm = TRUE)
-median(bl, na.rm = TRUE)
+mean(penguin$bill_length_mm, na.rm = TRUE)
+median(penguin$bill_length_mm)
 ```
 
 Functions to describe the dispersion (output not shown):
+
 ```{r results='hide'}
-sd(bl, na.rm = TRUE)
-var(bl, na.rm = TRUE)
-min(bl, na.rm = TRUE)
-max(bl, na.rm = TRUE)
-quantile(bl, na.rm = TRUE)
+sd(penguin$bill_length_mm, na.rm = TRUE) ## Standard deviation
+var(penguin$bill_length_mm) ## Variance
+min(penguin$bill_length_mm)
+max(penguin$bill_length_mm, na.rm = TRUE)
+quantile(penguin$bill_length_mm, na.rm = TRUE)
 ```
 
 Note that `quantile()` takes a parameter that allows you to choose the quantile to be calculated, e.g. `quantile(bl, c(0.1,0.9), na.rm = TRUE)`, will calculate the 10th and 90th percentile. Try adapting this to calculate the 25th and 75th percentile.
 
 Some other useful functions:
-```{r results='hide'}
-sum(bl, na.rm = TRUE)
-summary(bl)
+
+```{r}
+sum(penguin$bill_length_mm, na.rm = TRUE)
 ```
 
-Note that we do not need to tell R to exclude `NA`s for the `summary()` function. This provides a set of summary statistics *and* lets you know how many values are missing. 
-
-Some specific functions for categorical data
-```{r results='hide'}
-levels(sp)
-table(sp)
+```{r}
+table(penguin$species)
 ```
 
-As R is object oriented, functions will adapt to different data types
 ```{r results='hide'}
-summary(bl) ## Summary of numeric vector
-summary(sp) ## Summary of categorical vector
+summary(penguin$bill_length_mm)
+```
+
+As R is object oriented, functions will adapt to different data types. Compare:
+
+```{r results='hide'}
+summary(penguin$bill_length_mm) ## Summary of numeric vector
+summary(penguin$species) ## Summary of numeric vector
 summary(penguin) ## Summary of data frame
 ```
 
-### The `tapply()` function
+## The `summarize()` function
 
-R has a set of `*apply` functions designed to help to do repetitive tasks. We will look at one of the simplest of these today, the `table` apply function. This *applies* a function (e.g. mean) to a vector, but calculates the function on subgroups defined by categories in a second vector. For example, to calculate the average bill length per species of penguin, we can do the following:
+These functions can be used with the **dplyr** function `summarize()` to create summary statistics for a given column in the data frame, for example, finding the mean. To compute the average body mass, use the `mean()` function with the new column `body_mass_kg`. 
+
 ```{r}
-tapply(penguin$bill_length_mm, penguin$species, mean, na.rm = TRUE)
+penguin %>% 
+    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE))
 ```
 
-Repeat this and calculate the standard deviation per species. 
+You can use most of the functions that calculate summary statistics described above. There are a number of others that are useful here, including `n()` to ge the length of a vector:
 
+```{r}
+penguin %>% 
+    summarise(count = n())
+```
 
+And `n_distinct()` returns the number of distinct values in vector. 
 
-# Basic plotting in R
+```{r}
+penguin %>% 
+    summarise(count_islands = n_distinct(island),
+              count_species = n_distinct(species))
+```
+
+We can then easily set up a function to calculate a range of summary statistics as follows:
+
+```{r}
+penguin %>% 
+    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE),
+              sd_body_mass = sd(body_mass_kg, na.rm = TRUE),
+              min_body_mass = min(body_mass_kg, na.rm = TRUE),
+              max_body_mass = max(body_mass_kg, na.rm = TRUE))
+```
+
+Although this may not seem that useful (relative to using the functions on their own), combining this with a second function (`group_by`) really expands this use. 
+
+## The `group_by()` function
+
+The `group_by()` function is a very useful addition to these other functions. It is related to concept of "split-apply-combine", that for many analyses, we literally want to split the data frame by some variable (e.g. island or year), apply a function to the individual data frames and then combine the output.
+
+Let’s do that: split the `penguin` data frame by species, calculate summary statistics (as above), then return everything in a new data frame, giving a set of summary statistics for each country.
+
+```{r}
+penguin %>% 
+  group_by(species) %>%
+    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE),
+              sd_body_mass = sd(body_mass_kg, na.rm = TRUE),
+              min_body_mass = min(body_mass_kg, na.rm = TRUE),
+              max_body_mass = max(body_mass_kg, na.rm = TRUE))
+```
+  
+We can also group by two variables, here, we'll just calculate the mean body mass by species *and* island, and arrange by the mean:
+
+```{r results='hide'}
+penguin %>% 
+  group_by(species, island) %>%
+    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE)) %>%
+  arrange(avg_body_mass)
+```
+
+# Plotting with R
+
+## Base R
 
 We'll now look quickly at the basic plotting functions in R. R has a wide range of plotting types, and we will look at some more complex methods later in this class. For now, we will concentrate on the basic plotting function (`plot()`) and how to simply modify this.
 
-## Index plots
+### Scatter plots
 
-The simplest type of plot is an index plot, which simply plots values in the order they are recorded in the input vector. These are useful for examining the basic data structure and identifying errors and outliers. `plot` is a generic plotting command and will adapt to different data types. The parameter `type='p'` gives the plot type, here using points. Other options are `'l'` for lines, `'h'` for histogram lines, `'s'` for a stepped plot and `'b'` for both line and points. See `help(plot)` for more options and other parameters. 
-
-```{r}
-plot(penguin$bill_length_mm, type = 'p')
-```
-
-As we have only asked to plot one variable, this is represented on the y-axis. The x-axis gives the index of the observation, in this case from 1 to 350. Other index plots include strip plots and dot plots (also known as Cleveland plots). Here we use a combination of species name and row number to label the plot.
-
-```{r}
-stripchart(penguin$bill_length_mm, method = 'stack')
-
-dotchart(penguin$bill_length_mm[1:20], 
-         labels = paste(penguin$species[1:20], 1:20, sep = "_"))
-```
-
-The final example of an index plot shown in class is the quantile-quantile or q-q plot. This compares the quantiles of the set of data values to equivalent quantiles from a standard normal distribution. The first function used here `qqnorm()` plots this comparison, and if the data set is normally distributed, there should be a linear correspondence between the observed and theoretical quantiles, i.e. they should form a straight line on the scatterplot. The second function, `qqline`, adds a line representing the match between two normal distributions. If the points from the first function fall mainly on this line, we can infer that our data set is close to being normally distributed. 
-
-```{r}
-qqnorm(penguin$bill_length_mm)
-qqline(penguin$bill_length_mm)
-```
-
-## Summary plots 
-
-Summary plots attempt to describe the distribution of the data, giving some ideas about which values are most common and which are most rare. Histograms are commonly used for this method, values are 'binned' into a set of classes, and the histogram represents the frequency of occurrences in that bin. Bins are defined with the `breaks` parameter, which may be set to a constant number in which case the data range is split into that many bins, or as a sequence of numbers defining the intervals between bins. In this latter case, we can make use of the `seq()` function from earlier. 
-
-```{r}
-hist(penguin$bill_length_mm, breaks = 20)
-hist(penguin$bill_length_mm, breaks = seq(30, 60, 2.5))
-```
-
-An alternative to histograms are boxplots, which show information about the data quartiles.
-Here the box represents the interquartile data (25-75\% of the data), the thick bar is the median, and the 'whiskers' show the data range.
-
-```{r}
-boxplot(penguin$bill_length_mm)
-```
-
-This is not hugely informative, but we will expand this plot below:
-
-## Bivariate plots
-
-Bivariate plots are designed to show the relationship between two variables, and how this may vary. The simplest form is the scatter plot. We use the `plot()` function again, but now we give it two variables (x and y). 
+The basic R function for plotting (`plot()`) will produce a scatter plot of two variables:
 
 ```{r}
 plot(penguin$bill_length_mm, penguin$bill_depth_mm)
 ```
 
-As we know that these values come from three difference species, we can use this knowledge
-to add extra information to the plot, by using the `col` parameter. We first convert the `Species` vector to a factor class. R will then use the levels of the factor to assign colors to the points. We can also change the symbol type using the `pch` parameter.
+As we know that these values come from three difference species, we can use this knowledge to add extra information to the plot, by using the `col` parameter. We first convert the `Species` vector to a factor class. R will then use the levels of the factor to assign colors to the points. We can also change the symbol type using the `pch` parameter.
 
 ```{r}
 penguin$species <- as.factor(penguin$species)
@@ -791,37 +796,94 @@ legend("bottomleft",
        col = c(1,2,3), 
        pch = 16)
 ```
-Note that we can also use the `levels()` function introduced above to help - this will give us the list of labels to be used in the title:
 
-An alternative way to look at the association between factors and a variable is, again, to use boxplots. Note that this code uses a tilde ($\sim$) between the variable and the set of factors. The tilde is often used to define dependency between two variables, and we will return to this again during the modeling part of this class. 
+### Histograms
+
+Histograms are commonly used to visualize the distribution of a set of values. These are 'binned' into a set of classes, and the histogram represents the frequency of occurrences in that bin. 
+
+```{r}
+hist(penguin$bill_length_mm)
+```
+
+Bins can be defined with the `breaks` parameter, which may be set to a constant number in which case the data range is split into that many bins, or as a sequence of numbers defining the intervals between bins. In this latter case, we can make use of the `seq()` function from earlier. 
+
+```{r}
+hist(penguin$bill_length_mm, breaks = 20)
+hist(penguin$bill_length_mm, breaks = seq(30, 60, 2.5))
+```
+
+An alternative to histograms are boxplots, which show information about the data quartiles. Here the box represents the interquartile data (25-75\% of the data), the thick bar is the median, and the 'whiskers' show the data range.
+
+```{r}
+boxplot(penguin$bill_length_mm)
+```
+
+More usefully, we can look at boxplots across a set of classes. 
+
 
 ```{r}
 boxplot(penguin$bill_length_mm ~ penguin$species, 
         ylab = 'Bill length (mm)')
 ```
 
-As the boxplot does not automatically label the y-axis, we add this with the `ylab` parameter. See `help(plot)` and `help(par)` for a complete list of the plotting parameters. 
+Note that this code uses a tilde ($\sim$) between the variable and the set of factors. The tilde is often used to define dependency between two variables, and we will return to this again during the modeling part of this class. 
 
-## Graphic output
+### Graphic output
 
 By default, R plots graphics to the screen, but has the ability to save figures in most of the standard graphic formats. In order to do this, you first need to open a file (a graphics *device*), then run the plotting functions, then close the device. Remember that you need to plot all the layers of a figure before closing the file. The following example plots the penguin bill length data to a pdf file. Alternatives include: png, jpeg, svg, etc.; type `help(Devices)` for more details. 
 
 ```{r results='hide', eval=FALSE}
-pdf("penguin_bill_length.pdf")
-plot(penguin$bill_length_mm, penguin$bill_depth_mm,
-     col = penguin$species, 
-     pch = 16, 
-     xlab = "Bill length (mm)", 
-     ylab = "Bill depth (mm)",
-     main = "Penguin size measurements (Palmer Archipelago")
-legend("bottomleft",
-       legend = c("Adelie","Chinstrap","Gentoo"),
-       col = c(1,2,3), 
-       pch = 16)
+pdf("penguin_boxplot.pdf")
+boxplot(penguin$bill_length_mm ~ penguin$species, 
+        ylab = 'Bill length (mm)')
 dev.off()
 ```
 
 Alternatively, you can copy-paste directly into Word by going to [Export] -> [Copy to clipboard...] in R Studio's plotting window.
+
+## **ggplot2**
+
+The **ggplot2** package forms part of the tidyverse set of packages, and implements the [Grammar of Graphics][gg1ID] framework developed by Leland Wilkinson. The idea behind the grammar of graphics is that all plots can be described by a common language, rather than considering them as separate barplots, line charts, etc. What differs is the coordinate system and *geometry* used to place the data on the page. Using this package requires a little more work than standard plots, but the results are usually worth while. If you installed the tidyverse set of packages earlier, you will already have this on your system. If not, install it with `install.packages("ggplot2")`. Then load the library:
+
+```{r}
+library(ggplot2)
+```
+
+In order to understand how `ggplot` makes a figure, we need to establish what the fundamental parts are of every data graph. They are:
+
+1. *Aesthetics* – these are the roles that the variables play in each graph. A variable may control where points appear, the color or shape of a point, the height of a bar and so on.
+2. *Geometries* – these are the geometric objects which represent the data: points, lines, bars, ...
+3. *Statistics* – these are the functions which add some interpretation to the data, e.g. best fit line, location of median, etc
+4. *Scales* – these are legends that show the relationship between variables and different symbols or colors (e.g. circular symbols represent females while squares represent males)
+5. *Facets* – these are groups in your data which may be used to make multiple graphs, each for one of the groups. For example, faceting by gender would cause the graph to repeat for the two genders.
+
+When making a `ggplot` figure, we generally start by creating the base figure. To do this we need to tell the function where the data is coming from, and the base aesthetic (i.e. which variable is `x`, which is `y`?). To remake the first scatter plot with `ggplot()`, we start by doing the following:
+
+```{r}
+ggplot(penguin, aes(x = bill_length_mm, y=bill_depth_mm))
+```
+This creates the base plot with correct axes, but as you'll see, there is no data on it. This is because we have not specified the geometry - the way in which we want the data to be plotted. **ggplot2** works as a series of layers, so we can add (`+`) the geometry to this base as follows: 
+
+```{r}
+ggplot(penguin, aes(x = bill_length_mm, y=bill_depth_mm)) +
+  geom_point()
+```
+
+We can specify symbols and colors for the points in the `geom_` function:
+
+```{r fig.show='hide'}
+ggplot(penguin, aes(x = bill_length_mm, y=bill_depth_mm)) +
+  geom_point(color = 'darkorange', shape = 4, size = 4)
+```
+More usefully, we can use any of the categorical variables to set the color. To do this, we need to use them when creating the aesthetic, so that different colors will be used for each class. This also adds a legend directly.
+
+```{r}
+ggplot(penguin, aes(x = bill_length_mm, 
+                    y = bill_depth_mm,
+                    col = species)) +
+  geom_point()
+```
+
 
 
 # Quitting R
@@ -853,3 +915,5 @@ Here are some of the best places to look for help:
 - [rdrr.io](https://rdrr.io/)
 - [community.rstudio.com](https://community.rstudio.com/)
 - [stackoverflow.com](https://stackoverflow.com/)
+
+[gg1ID]: https://www.amazon.com/Grammar-Graphics-Statistics-Computing/dp/0387245448
