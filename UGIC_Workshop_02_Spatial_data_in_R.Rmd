@@ -1,5 +1,10 @@
 ---
-title: "GEOG 5680 6680 12 Spatial data in R"
+title: "UGIC Workshop: 02 Spatial data in R"
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'UGIC_Workshop_02_Spatial_Data.html'))})
 author: | 
   | Simon Brewer and Blake Vernon
   | Geography and Anthropology Departments
@@ -19,9 +24,9 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ```
 
-In this lab, we will explore some of R's functionality with spatial data, with special attention given to the **sf** package. For more information about `sf`, you can visit their [website](https://r-spatial.github.io/sf/). Robin Lovelace's book _Geocomputation with R_ (available [online](https://geocompr.robinlovelace.net/)) is also a really helpful and educational source for learning **sf**. In fact, much of this lab is just an abbreviated version of that book. For some of the longer examples, it is highly recommended to use R's scripting functions to run the examples to save on re-typing.  
+In this lab, we will explore some of R's functionality with spatial data, with special attention given to the **sf** package. For more information about `sf`, you can visit their [website](https://r-spatial.github.io/sf/). Robin Lovelace's book _Geocomputation with R_ (available [online](https://geocompr.robinlovelace.net/)) is also a really helpful and educational source for learning **sf**. For some of the longer examples, it is highly recommended to use R's scripting functions to run the examples to save on re-typing.  
 
-Before starting, remember to create a working directory (e.g. `module12`). Next download the files for today's lab from the Canvas page and move them to this directory. You'll need the following files:
+Next download the following files Google drive and move them to your `data` folder:
 
 - Climate dataset for Western North America: *WNAclimate.csv*
 - Temperature dataset for Oregon in shapefile format: *oregon.zip*
@@ -56,18 +61,21 @@ library(viridis)
 
 ### What is `sf`?
 
-`sf` is an R package designed to work with spatial data organized as "simple features" (hence, 'sf'). Mostly, it supersedes the `sp` package (written by the same people), but it also collapses a lot of other R packages into one. In fact, just a few years ago, if you were to take this course, you would have loaded all of these packages:  
+`sf` is an R package designed to work with spatial data organized as "simple features", an ISO standard for spatial data. The `sf` package is able to provide all the functionality it does because it interfaces with three widely adopted programming standards: PROJ, GDAL, and GEOS. These provide for coordinate reference systems, reading and writing of spatial data, and geometric operations, respectively, but more on this in a moment. 
 
-```{r, eval = FALSE}
+Note that all `sf` functions are prefixed with `st_` (a legacy of this R package's origins in PostGIS, where 'st' means "spatial type"). If this is not already installed on your computer, you'll need to install it before going any further:
 
-library(maptools)
-library(rgdal)
-library(rgeos)
-library(sp)
+```{r eval=FALSE}
+
+install.packages("sf")
 
 ```
 
-Now, a simple  
+### What is a simple feature?
+
+A simple feature is, in the words of the `sf` authors, "a formal standard (ISO 19125-1:2004) that describes how objects in the real world can be represented in computers, with emphasis on the spatial geometry of these objects" ([ref](https://r-spatial.github.io/sf/articles/sf1.html)). In other words, its structured data that provides information about a location in space, including its shape.
+
+One great advantage of `sf` is that the data is stored in R's memory as an extended dataframe. This means that all the functions that you can apply to a dataframe should work with an `sf` object. To demonstarte this, we'll load a file of county outlines for North Carolina (this file is included when you install the `sf` package). First load the `sf` library:
 
 ```{r}
 
@@ -75,17 +83,7 @@ library(sf)
 
 ```
 
-will suffice. The `sf` package is able to provide all the functionality it does because it interfaces with three widely adopted programming standards: PROJ, GDAL, and GEOS. These provide for coordinate reference systems, reading and writing of spatial data, and geometric operations, respectively, but more on this in a moment. 
-
-Note that all `sf` functions are prefixed with `st_` (a legacy of this R package's origins in PostGIS, where 'st' means "spatial type").
-
-<br>
-
-### What is a simple feature?
-
-A simple feature is, in the words of the `sf` authors, "a formal standard (ISO 19125-1:2004) that describes how objects in the real world can be represented in computers, with emphasis on the spatial geometry of these objects" ([ref](https://r-spatial.github.io/sf/articles/sf1.html)). In other words, its structured data that provides information about a location in space, including its shape.
-
-The way that `sf` chooses to represent simple features in R should be familiar to you because they are just fancy data.frames. To demonstrate this, we'll load a file of county outlines for North Carolina (this file is included when you install the `sf` package):
+Now load the shapefile using `st_read()`. This is a generic function (more on this below) for loading spatial data, and will work with most vector formats. 
 
 ```{r}
 
@@ -101,7 +99,7 @@ north_carolina
 
 <br>
 
-You can summarize this somewhat verbose printout by noting that simple features fit a simple formula:
+Note that there are a few lines of metadata, and then each row represents one spatial feature, along with a set of associated information. You can summarize this somewhat verbose printout by noting that simple features fit a simple formula:
 
 <br>
 
@@ -113,12 +111,14 @@ This formula also suggests the kinds of ways that you might interact with an `sf
 <br>
 
 ##### __Attributes__
+
 _Attributes_ are properties of a feature. In this case, the features are counties in North Carolina, and their attributes are things like name and area. In an `sf` data.frame, __each feature is a row, and each attribute is a column__. In the `north_carolina` object, for example, the first feature has the name "Ashe" and its county ID is 1825. 
 
 <br>
 
 ##### __Geometry__
-A very special attribute column is called the _geometry_ (sometimes labeled 'geom' or 'shape'). It consists of a point or set of points (specifically, their coordinates) that define the shape and location of the feature. The simple feature standard includes 17 geometry types, 7 of which are supported by `sf`: point, multipoint, linestring, multilinestring, polygon, multipolygon, and geometry collection.  
+
+A very special attribute column is called the _geometry_ (sometimes labeled 'geom' or 'shape'), shown above in the last column. It consists of a point or set of points (specifically, their coordinates) that define the shape and location of the feature. The simple feature standard includes 17 geometry types, 7 of which are supported by `sf`: point, multipoint, linestring, multilinestring, polygon, multipolygon, and geometry collection.  
 
 <br>
 
@@ -169,6 +169,14 @@ If you want to know what geometry type your simple feature contains, try:
 ```{r}
 
 st_geometry_type(a_line)
+
+```
+
+To show the type of the first feature in the North Carolina shapefile:
+
+```{r}
+
+st_geometry_type(north_carolina[1, ])
 
 ```
 
@@ -233,9 +241,12 @@ In `sf`, the function for reading in spatial data is `st_read`. Here is the nitt
 
 ```{r}
 
-NY8 <- st_read(dsn = "./NY_data/NY8_utm18.shp",
-               layer = "NY8_utm18",
+#./data/utahcounty/utahcounty.shp
+
+utah <- st_read(dsn = "./data/utahcounty/utahcounty.shp",
+               layer = "utahcounty",
                drivers = "ESRI Shapefile")
+
 
 ```
 
@@ -245,7 +256,7 @@ In this case, we are using a simple ESRI shapefile, so the data source and layer
 
 ```{r}
 
-NY8 <- st_read("./NY_data/NY8_utm18.shp")
+utah <- st_read("./data/utahcounty/utahcounty.shp")
 
 ```
 
@@ -253,7 +264,7 @@ And here's what this looks like:
 
 ```{r, echo = FALSE}
 
-plot(st_geometry(NY8))
+plot(st_geometry(utah))
 
 ```
 
@@ -266,7 +277,7 @@ Sometimes you have spatial data, but it is not in a spatial data format. Usually
 
 ```{r}
 
-wna_climate <- read.csv("./WNAclimate.csv")
+wna_climate <- read.csv("./data/WNAclimate.csv")
 
 head(wna_climate)
 
@@ -316,28 +327,59 @@ or, more simply:
 
 ```{r, eval = FALSE}
 
-st_write(wna_climate, dsn = "./wnaclim.shp")
+st_write(wna_climate, dsn = "./data/wnaclim.shp")
 
 ```
-
-
 
 
 # CRS operations
 
 __The cardinal rule for working with any spatial data is to make sure all of it is in the same CRS.__ This ensures that any analysis which combines multiple sources is correctly comparing values at the same locations. Never ever ever ever do anything with your data until you are sure you've got the CRS right.
 
-<br>
-
-### Check CRS
-
 The `st_crs()` function allows you to quickly check the CRS for any object. 
 
 ```{r}
 
-st_crs(NY8)
+st_crs(utah)
 
 ```
+
+Which shows as missing (`NA`), as there was no prj file with this shapefile. We can set this using an EPSG code. The shapefile is in WGS84, and the EPSG code for this is 4326. There are two methods to set the CRS for a spatial object: `st_crs<-` and `st_set_crs`. 
+
+```{r}
+
+utah <- st_set_crs(utah, 4326)
+
+st_crs(utah) <- 4326
+
+```
+
+If we now recheck the CRS, you'll see that it is now fully informed in WKT format:
+
+```{r}
+
+st_crs(utah)
+
+```
+
+Note: this should only be used when the simple feature is missing a CRS and you know what it is. It is __NOT__ for _re-projecting_ the sf object to a new coordinate system.
+
+<br>
+
+### Reprojecting CRS
+
+The `st_transform()` function allows you to project your sf object to a new CRS. This is particularly useful if you have multiple data sources with different original coordinate systems. Here, we'll reproject the Utah country data to UTM Zone 12N (EPSG code 32612):
+
+```{r}
+
+utah <- st_transform(utah, crs = 32612)
+
+st_crs(utah)
+
+```
+
+As a reminder: when you read in spatial data, the first thing you should use is `st_crs` to check the CRS and `st_transform` to re-project if necessary. 
+
 
 <br>
 
@@ -345,7 +387,7 @@ You can also check the EPSG code (if specified):
 
 ```{r}
 
-st_crs(NY8)$epsg
+st_crs(utah)$epsg
 
 st_crs(wna_climate)$epsg
 
@@ -357,45 +399,10 @@ And you can get the name of a CRS this way:
 
 ```{r}
 
-format(st_crs(NY8))
+format(st_crs(utah))
 
 ```
 <br>
-
-
-### Set CRS
-
-There are two methods to set the CRS for a spatial object: `st_crs<-` and `st_set_crs`. 
-
-```{r}
-
-wna_climate <- st_set_crs(wna_climate, 4326)
-
-st_crs(wna_climate) <- 4326
-
-# st_crs(wna_climate)
-
-```
-
-Note: this should only be used when the simple feature is missing a CRS and you know what it is. It is __NOT__ for _re-projecting_ the sf object to a new coordinate system.
-
-<br>
-
-### Reprojecting CRS
-
-The `st_transform()` function allows you to project your sf object to a new CRS. This is particularly useful if you have multiple data sources with different original coordinate systems. 
-
-```{r}
-
-# st_crs(NY8)
-
-NY8 <- st_transform(NY8, crs = 4326)
-
-# st_crs(NY8)
-
-```
-
-As a reminder: when you read in spatial data, the first thing you should use is `st_crs` to check the CRS and `st_transform` to re-project if necessary. 
 
 
 # Attribute operations
@@ -404,15 +411,7 @@ The attribute part of a `sf` object is a data.frame, so you can use all the meth
 
 ```{r}
 
-oregon_tann <- read_sf("./oregon/oregontann.shp")
-
-class(oregon_tann)
-
-```
-
-```{r, echo = FALSE}
-
-plot(st_geometry(oregon_tann), col = "darkred", pch = 19)
+class(utah)
 
 ```
 
@@ -420,7 +419,7 @@ If you enter the name of an `sf` object, it will print the first few rows of the
 
 ```{r}
 
-oregon_tann
+utah
 
 ```
 
@@ -429,47 +428,48 @@ oregon_tann
 
 ### Select Columns
 
-```{r}
+As this is a dataframe at heart, we can use the same functions we looked at in the previous lab to manipulate the data:
 
-# get elevation and tann columns
+```{r message=FALSE}
 
-# method 1
-oregon_tann2 <- oregon_tann[ , c("elevation", "tann")]
+# method 1 (base R)
+utah2 <- utah[ , c("NAME", "FIPS", "POP_CURRES")]
 
-# method 2
-oregon_tann2 <- subset(oregon_tann, select = c(elevation, tann))
+# method 2 (dplyr)
+library(dplyr)
+utah2 <- utah %>%
+  select(NAME, FIPS, POP_CURRES)
 
-names(oregon_tann)
+names(utah)
 
-names(oregon_tann2)
+names(utah2)
 
 ```
 
-Notice this very important difference between regular data.frames and `sf` data.frames: when you subset by columns, even though you do not explicitly state that you want to keep the geometry column, it keeps that column anyway. In this sense, the geometry column is said to be "sticky."
+Notice this very important difference between regular data.frames and `sf` data.frames: when you subset by columns, even though you do not explicitly state that you want to keep the geometry column, it keeps that column anyway. In this sense, the geometry column is said to be "sticky".
 
 <br>
 
 ### Filter Rows
 
-Subsetting the data by rows works in the same way as before. So we can carry out conditional selection of locations by using the usual comparison operators (`<, <=, ==, !=, >=, >`). For example, to select only the points above 1000 m elevation in the Oregon data set:
+Subsetting the data by rows works in the same way as before. So we can carry out conditional selection of locations by using the usual comparison operators (`<, <=, ==, !=, >=, >`). For example, to select only the counties with over 50,000 people:
 
 ```{r}
 
-# get features above 1000 meters
-
 # method 1
-oregon_tann3 <- oregon_tann[oregon_tann$elevation > 1000, ]
+utah3 <- utah[utah$POP_CURRES > 50000, ]
 
 # method 2
-oregon_tann3 <- subset(oregon_tann, subset = elevation > 1000)
+utah3 <- utah2 %>%
+  filter(POP_CURRES > 50000)
 
 ```
 
 ```{r, echo = FALSE}
 
-plot(st_geometry(oregon_tann), col = alpha("gray", 0.2), pch = 19)
+plot(st_geometry(utah), col = alpha("gray", 0.2), pch = 19)
 
-plot(st_geometry(oregon_tann3), col = "darkred", pch = 19, add = TRUE)
+plot(st_geometry(utah3), col = "darkred", pch = 19, add = TRUE)
 
 ```
 
