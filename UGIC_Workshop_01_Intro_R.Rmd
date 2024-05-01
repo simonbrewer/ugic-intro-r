@@ -934,26 +934,82 @@ ggplot(aes(x = bill_length_mm,
   theme_bw() +
   facet_wrap(~year) 
 ```
+In addition to the points, **ggplot2** has several other geometries for lines, barplots, histograms, polygons, and even maps (we'll look at this later). Here's just a few examples:
 
-```{r}
+- Histograms
+
+```{r warning=FALSE}
 ggplot(penguin, aes(x = bill_length_mm)) +
   geom_histogram()
 ```
+- Histograms by class (species) with transparency (`alpha`)
 
-```{r}
+```{r warning=FALSE}
 ggplot(penguin, aes(x = bill_length_mm, fill = species)) +
   geom_histogram(position = 'identity', alpha = 0.7)
 ```
+- Boxplots
 
 ```{r}
 ggplot(penguin, aes(x = species, y = bill_length_mm)) +
   geom_boxplot()
 ```
 
+- Boxplots by class
+
 ```{r}
-ggplot(penguin, aes(x = species, y = bill_length_mm, fill = sex)) +
+penguin %>%
+  filter(!is.na(sex)) %>%
+  ggplot(aes(x = species, y = bill_length_mm, fill = sex)) +
   geom_boxplot()
 ```
+
+- Barplots. The default is stacked barplots, add `position = 'dodge'` to the `geom_bar()` function to change to side-by-side bars
+
+```{r}
+penguin %>%
+  filter(!is.na(sex)) %>%
+  ggplot(aes(x = island, fill = species)) +
+  geom_bar()
+```
+
+- Barplots. You can change to horizontal bars by flipping the axes:
+
+```{r}
+penguin %>%
+  filter(!is.na(sex)) %>%
+  ggplot(aes(x = island, fill = species)) +
+  geom_bar(position = 'dodge') + 
+  coord_flip()
+```
+
+## Making interactive plots
+
+One great advantage of the RStudio interface is that it has made it easier to make interactive plots with R. One library that allows you do this is **plotly**, an interface to the well-known plotly API. This has a set of functions for building quite complex data visualizations, but also comes with a helper function `ggplotly()` that makes any **ggplot2** figure interactive. 
+
+Here, we'll remake the scatterplot we make earlier, but rather than showing it on the screen, we'll save it to an `gg` object called `p1`:
+
+```{r}
+p1 <- penguin %>%
+  filter(!is.na(sex)) %>%
+ggplot(aes(x = bill_length_mm, 
+                    y = bill_depth_mm,
+                    col = species,
+                    shape = sex)) +
+  geom_point() +
+  scale_x_continuous("Bill Length (mm)") +
+  scale_y_continuous("Bill Length (mm)") +
+  theme_bw()
+```
+
+This object holds all of the information to make the figure. If you just type `p1` in the console, you'll see this appear in the plot window. Instead, we'll load the **plotly** library (you'll need to install this with `install.packages("plotly")`), and then run the `ggplotly()` function with the figure object:
+
+```{r}
+library(plotly)
+ggplotly(p1)
+```
+
+While the figure will look largely the same, you should see that it is in the 'Viewer' tab not the plot tab. If you hover your cursor over the plot, you'll see labels appear on the closest point, and there will be a menu at the top that allows you to zoom in and out. While useful for exploring data, these figures can also be embedded into html pages (as here) for public visualization.
 
 # Quitting R
 
