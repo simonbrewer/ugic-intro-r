@@ -883,8 +883,77 @@ ggplot(penguin, aes(x = bill_length_mm,
                     col = species)) +
   geom_point()
 ```
+You can also add a shape aesthetic using another categorical variable (here we'll at the different sexes):
 
+```{r}
+ggplot(penguin, aes(x = bill_length_mm, 
+                    y = bill_depth_mm,
+                    col = species,
+                    shape = sex)) +
+  geom_point()
+```
 
+Note that there are some missing values in the `sex` column. This allows us to demonstrate another neat aspect of **ggplot2** - it can be combined with **dplyr** for preprocessing. Here, we'll use the `filter()` function and `is.na()` to remove the missing values and pipe the output directly to `ggplot`:
+
+```{r}
+penguin %>%
+  filter(!is.na(sex)) %>%
+ggplot(aes(x = bill_length_mm, 
+                    y = bill_depth_mm,
+                    col = species,
+                    shape = sex)) +
+  geom_point()
+```
+We can next add scales to set the x and y label. These functions can do quite a bit more, e.g. logarithmic scaling or scaling colors. We'll also set a theme to remove the default gray background (there's a few of these, and several more that can be added with the **ggthemes** package).
+
+```{r}
+penguin %>%
+  filter(!is.na(sex)) %>%
+ggplot(aes(x = bill_length_mm, 
+                    y = bill_depth_mm,
+                    col = species,
+                    shape = sex)) +
+  geom_point() +
+  scale_x_continuous("Bill Length (mm)") +
+  scale_y_continuous("Bill Length (mm)") +
+  theme_bw()
+```
+
+We'll just make one more adjustment to this figure. We'll add a `facet` layer. This splits the original plot into a set of small multiples, based on another categorical variable (here we'll use the year). 
+
+```{r}
+penguin %>%
+  filter(!is.na(sex)) %>%
+ggplot(aes(x = bill_length_mm, 
+                    y = bill_depth_mm,
+                    col = species,
+                    shape = sex)) +
+  geom_point() +
+  scale_x_continuous("Bill Length (mm)") +
+  scale_y_continuous("Bill Length (mm)") +
+  theme_bw() +
+  facet_wrap(~year) 
+```
+
+```{r}
+ggplot(penguin, aes(x = bill_length_mm)) +
+  geom_histogram()
+```
+
+```{r}
+ggplot(penguin, aes(x = bill_length_mm, fill = species)) +
+  geom_histogram(position = 'identity', alpha = 0.7)
+```
+
+```{r}
+ggplot(penguin, aes(x = species, y = bill_length_mm)) +
+  geom_boxplot()
+```
+
+```{r}
+ggplot(penguin, aes(x = species, y = bill_length_mm, fill = sex)) +
+  geom_boxplot()
+```
 
 # Quitting R
 
