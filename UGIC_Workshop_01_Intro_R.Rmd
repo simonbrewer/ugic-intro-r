@@ -42,9 +42,9 @@ plot(x, y)
 
 And R output will be formatted with `##` at the start of the line. File names will be given in *italics* and will be available in the 'data' directory on the course Canvas site. 
 
-## Getting started
+# Getting started
 
-### RStudio layout
+## RStudio layout
 
 The R Studio interface consists of several windows. Start R Studio from the 'Start' menu under Windows, and the following window should appear:
 
@@ -57,18 +57,18 @@ The R Studio interface consists of several windows. Start R Studio from the 'Sta
 
 Note that you can rearrange the order of these panels, so this may look different on other computers.
 
-### Working with R
+## Working with R
 
 Much of your time spent with R will involve typing commands in at the console, and R Studio has some help with this.
 
 - The up/down arrow keys allow you to cycle back through commands that have been previously entered. You can then modify or reuse these as necessary. The commands can also be accessed through the `History' tab in the top-right panel
 - The console has 'tab-completion', which allows you to enter the first few characters of a string or function name, press 'Tab', and R Studio will bring up a list of possible options that match the string you entered. Try typing `pri` and pressing 'Tab' - you should see `print` as part of the list, and you can click on this, or scroll down to use it from the list. 
 
-### Workspace
+## Workspace
 
 R has a *workspace* where variables and data are stored as you use it. This is held in the memory of the computer, so if you are working from a file, you will need to read it in to the R workspace, and then work on the values held in memory. This means that you only access files to read in or write out data, the rest of the time you are working on a copy in the workspace. 
 
-### Working directory
+## Working directory
 
 R defines the working directory as the folder in which it is currently working. When you ask R to open a certain file, it will look in the working directory for this file, and when you tell R to save a data file or plot, it will save it in the working directory. Once you have done this, download all the files from the training session Google drive and move them to the data folder. 
 
@@ -134,7 +134,7 @@ Before proceeding with the rest of today's lab, make sure to change your working
 
 If this all seems a little foreign to you, don't worry - there will be plenty of opportunities to practice this over the day. Understanding the directory structure is very important in being able to manage your files both for this training session and any analysis you will do later. 
 
-### Using the console
+## Using the console
 
 In the console, the '`>`' is the prompt, and your commands will be entered here. Click on the console window, then enter the following:
 
@@ -151,7 +151,22 @@ log(2)
 sqrt(2)
 ```
 
-# Working with variables in R
+## Asssigning output
+
+So far, these commands have runs some calculations and displayed the results in the console. If you need to store any R output for further use, you will need to assign to to a variable. There are two assignment operators in R `<-` and `=`. These are interchangeable, and you will see both used in R examples. To store the results of the previous commands:
+
+```{r}
+a = log(2)
+b = sqrt(2)
+```
+
+If you now look in the top right corner in the 'Environment' window, you should see these two variables appear. These are now held in R's workspace and can be reused:
+
+```{r}
+a + b
+```
+
+#File input and output
 
 R can use many different file types, but comma separated value (csv) files are most frequently used as the easiest way to transfer between R and Excel. Make sure you have changed your working directory to the `ugic2024` folder. Then get a list of csv files in the `data` folder as follows (note the use of the pattern parameter to get only certain files):
 
@@ -184,16 +199,40 @@ str(penguin)
 ```{r echo=FALSE}
 str(penguin)
 ```
-## Data indexing
+
+You can write out dataframes to csv files with `write.csv()`. Here we'll write the penguin data back out to a new file (normally, we'd only do this after transforming or working with the data, but this is just an example). Once you've run this, check the `data` folder to make sure the new file has been created.
+
+```{r}
+write.csv(penguin, "./data/penguin2.csv", row.names = FALSE)
+```
+
+You can also write out the entire contents of R's workspace to a binary file (`*.RData`), with the save function. This can be useful if you want to save a snapshot of your current R session with all the variables and objects you are working with. To save the current workspace:
+
+```{r}
+save(list = ls(), file = "dat.RData")
+```
+
+We can now clear the current workspace (check the environment window before and after you do this):
+
+```{r}
+rm(list = ls())
+```
+
+And if we now reload the binary file, you should see that the variables we had previously (`penguin`, `a`, `b`) reappear in the environment.
+
+```{r}
+load(file = "dat.RData")
+```
+
+# Data manipulation
 
 When we read in the contents of the file, it was store as a dataframe with a variable name `penguin` - this represents the whole dataset. Normally however, you will need to work with subsets of the data (e.g. individual columns or sets of rows). There are two common ways to do this, one with base R and one using the tidyverse, that we will explore here. The tidyverse syntax is becoming more prevalent, especially for data science work, but there are still times when understanding the base R approach can be useful, e.g. when working with matrices or arrays. 
 
-### Base R
+## Base R
 
 If you want to use base R to access subsets of the data frame or individual values, you will need to understand how R indexes data. R uses a 1-based indexing, which means that the first value in any set of data will be indexed at 1, then at 2, etc. This is in contrast to some other languages (e.g. Python) that use 0-based indexing. 
 
-
-#### Vectors
+### Vectors
 
 To show how this works, we'll first create a vector of random numbers and print the content (note that your values will be different):
 
@@ -232,7 +271,7 @@ You can also use a reverse index with a `-` symbol. This will extract all values
 x[-1]
 ```
 
-#### Matrices
+### Matrices
 
 Matrices in R are index by `[row,col]`, so you need to provide both of these to extract subsets of data. Here we'll make up a small matrix with values from 2 to 24 on a step of 2:
 
@@ -271,7 +310,7 @@ Or the first row for the same columns:
 x[1, 2:4]
 ```
 
-#### Dataframes
+### Dataframes
 
 At this point, you may be wondering how all this relates to data frames - which is how the penguin data was stored when it was read in from the csv file earlier. Data frames are similar to 2D matrices as they are composed of rows (representing observations) and columns (representing variables). As a result, you can use the same row/column indexing to access subsets of data:
 
@@ -321,7 +360,7 @@ These operators can be combined, so to get all instances of "Adelie" species wit
 penguin[(penguin$species == 'Adelie') & (penguin$bill_length_mm > 40), ]
 ```
 
-#### Matrices vs dataframes
+### Matrices vs dataframes
 
 The main difference is that dataframes can contain different data classes, where as matrices and vectors can only contain a single class. Compare the matrix we made earlier:
 
@@ -339,50 +378,191 @@ class(penguin$bill_length_mm)
 class(penguin$species)			
 ```
 
+## Data manipulation with the tidyverse
 
+The tidyverse is a set of add-on packages for R that are largely designed to streamline working with and visualizing data in R. One of these packages (**dplyr**) is used to transform and summarize tabular data with rows and columns, like R's dataframes. It can be used as a replacement for much of the indexing described above. The package contains a set of functions (or "verbs") that perform common data manipulation operations such as filtering for rows, selecting specific columns, re-ordering rows, adding new columns and summarizing data.
 
-row/column notation is a more flexible approach, and allows you to access individual rows, columns or values, or to access a range of rows and columns
+As this is an add-on package, you will need to download and install it. YOu can install the entire set of tidyverse packages with:
 
-```{r results='hide'}
-penguin[ ,4]   # 4th column
-penguin[10, ]  # 10th row
+```{r eval=FALSE}
+install.packages("tidyverse")
 ```
 
-Alternatively, you can access a range of rows and columns using `:`:
+Or just **dplyr** with:
 
-```{r results='hide'}
-penguin[ ,1:4]     # Columns 1 to 4
-penguin[1:10, ]    # First 10 rows
-penguin[1:50,1:2]  # First 50 rows of the first two columns
+```{r eval=FALSE}
+install.packages("tidyverse")
 ```
 
-Note that the data frame can contain different data classes. Compare:
+Note that you will only need to install this once, but each time you want to use it in a new R session, you will need to load it into memory using the `library` function: 
+
+```{r message=FALSE}
+library(dplyr)
+```
+
+**dplyr** has a wide variety of operations, but the most important ones are:
+
+| Verb | Description |
+|-----|-----|
+| `select()` |	select columns |
+| `filter()`	| filter rows | 
+| `arrange()`	| re-order or arrange rows |
+| `mutate()` | create new columns |
+| `summarise()` | summarize values |
+| `group_by()` | allows for group operations | 
+
+These functions are commonly used with a pipe operator, which can be used to chain functions together. This is loaded automatically with **dplyr** so you don't need to worry about loading it. The pipe operator is written as `%>%` (or `|>`), and takes the output from one function and *pipes* it directly to another function. In the first example below, we'll look at using one of these functions without and then with the pipe, and then use the pipe throughout the rest of this lab. 
+
+### Selecting by column
+
+The `select()` function allows the selection of columns by name. To use this without the pipe, add the data frame name in the function parentheses. Here we select two columns from the `penguin` dataframe, and then use the head function to show the first few rows. 
+
 ```{r}
-class(penguin)			
-class(penguin$bill_length_mm)		
-class(penguin$species)			
+spp_yr <- select(penguin, species, year)
+head(spp_yr) # Show the first 6 rows
 ```
 
-To access specific values within a vector, use the index of that value:
-```{r results='hide'}
-penguin$bill_length_mm[3]      # 3rd element
-penguin$bill_length_mm[-3]     # All but 3rd element
-penguin$bill_length_mm[1:10]   # First 10 elements
+We can rewrite this as a single line using the `%>%` pipe and avoiding the need for the intermediate data frame `spp_yr`. Note there are two pipes: the first sends the dataframe to the `select()` function, and the second sends the output of this function to the `head()` function:
+
+```{r}
+penguin %>% 
+  select(species, year) %>% 
+  head()
 ```
 
-Logical operators $<, <=, >, >=, ==, !=$ can be used to select parts of the data set by value. This is very useful if you only want to analyze part of your dataset:
+For most of these examples, we won't save the output, but you can easily store this by assigning it to a new variable:
 
-```{r results='hide'}
-penguin$bill_length_mm[penguin$bill_length_mm > 40]	# All bill lengths over 40 mm
-penguin[penguin$bill_length_mm > 40, ]	# All columns with bill length length over 40 
-penguin$bill_length_mm[(penguin$species == 'Adelie')] 	# All "Adelie" penguins
-penguin[(penguin$species == 'Adelie'), ] 	# All columns for "Adelie" penguins
+```{r}
+spp_yr <- penguin %>% 
+  select(species, year) 
 ```
 
-These operators can be combined, so to get all instances of "Adelie" species with bill lengths greater than 40:
+To select all the columns except a specific column, use the "-" (subtraction) operator:
 
 ```{r results='hide'}
-penguin[(penguin$species == 'Adelie') & (penguin$bill_length_mm > 40), ]
+penguin %>% 
+  select(-year) %>% 
+  head()
+```
+
+To select a range of columns by name, use the "`:`" (colon) operator (as we did with selecting multiple columns using indices)
+
+```{r results='hide'}
+penguin %>% 
+  select(bill_length_mm:body_mass_g) %>%
+  head()
+```
+
+To select all columns that start with the character string "`bill`", use the function `starts_with()`
+
+```{r results='hide'}
+penguin %>%
+  select(starts_with("bill"))
+```
+
+Here are some additional functions to select columns based on a specific criteria:
+
+- `ends_with()` = Select columns that end with a character string
+- `contains()` = Select columns that contain a character string
+- `matches()` = Select columns that match a regular expression
+- `one_of()` = Select columns names that are from a group of names
+
+### Filtering by row
+
+The `filter()` function allows the selection of rows. To filter the data for rows where the body mass is over 4000 grams:
+
+```{r results='hide'}
+penguin %>% 
+  filter(body_mass_g > 65)
+```
+
+You can add mulitple conditions in the filter function. For example, to filter for male penguins with a body mass of over 4000 g:
+
+```{r results='hide'}
+penguin %>%
+  filter(sex == "male", body_mass_g > 4000)
+```
+
+To filter for male penguins with a body mass of over 4000 g, and are from Torgensen island: 
+
+```{r results='hide'}
+penguin %>%
+  filter(sex == "male", body_mass_g > 4000, island == "Biscoe")
+```
+
+Filter for female penguins from Biscoe and Torgensen islands
+```{r results='hide'}
+penguin %>%
+  filter(sex == "female", island %in% c("Biscoe","Torgensen"))
+```
+
+Note that there is also a `slice()` function, which simply extracts rows according to their position - this is the equivalent to the indexing we have done before:
+
+```{r}
+penguin %>%
+  slice(1:10)
+```
+
+## The `arrange()` function
+
+This function allows us to arrange (or re-order) rows by a particular column. So to arrange by increasing life expectancy (I'm using the `head()` function to limit the amount of data that appears on the screen): 
+
+```{r}
+penguin %>% 
+  arrange(bill_length_mm) %>% 
+  head()
+```
+
+And you can include the `desc()` function to reverse the sort order:
+
+```{r}
+penguin %>% 
+  arrange(desc(bill_length_mm)) %>% 
+  head()
+```
+
+Note that you can add additional variable names to `arrange()` to sort on consecutive columns. 
+
+## Using multiple functions
+
+The real power of **dplyr** comes when you start 
+
+Now, we will select four columns from the dataset, arrange the rows by the life expectancy then pass this to `head()` to show the first few rows:
+
+```{r results='hide'}
+gap %>% 
+  select(country, year, lifeExp, gdpPercap) %>%
+  arrange(lifeExp) %>%
+  head()
+```
+
+Now do the same, but only filter for the year 2002
+
+```{r results='hide'}
+gap %>% 
+  select(country, year, lifeExp, gdpPercap) %>%
+  filter(year == 2002) %>%
+  arrange(lifeExp) %>%
+  head()
+```
+
+Or to do the same, but ordered by GDP:
+```{r results='hide'}
+gap %>% 
+  select(country, year, lifeExp, gdpPercap) %>%
+  filter(year == 2002) %>%
+  arrange(gdpPercap) %>%
+  head()
+```
+
+Repeat this, but sort the GDP in descending order. For this, we can use the function `desc()`:
+
+```{r results='hide'}
+gap %>% 
+  select(country, year, lifeExp, gdpPercap) %>%
+  filter(year == 2002) %>%
+  arrange(desc(gdpPercap)) %>%
+  head()
 ```
 
 ## Factors 
