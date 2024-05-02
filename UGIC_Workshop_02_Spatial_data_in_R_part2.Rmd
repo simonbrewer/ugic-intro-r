@@ -243,7 +243,7 @@ You can also extract for multiple locations. Let's generate a set of random poin
 
 ```{r}
 
-random_pnts <- st_sample(bethel, size = 50)
+random_pnts <- st_sample(bethel, size = 20)
 
 extract(b5, st_coordinates(random_pnts))
 
@@ -363,7 +363,7 @@ plotRGB(landsatRGB, stretch = "lin")
 
 We can also make a false color composite with the NIR, red and green bands, where bright reds indicate vegetation cover:
 
-`Another popular image visualization method in remote sensing is known “false color” image in which NIR, red, and green bands are combined. This representation is popular as it makes it easy to see the vegetation (in red).
+Another popular image visualization method in remote sensing is known "false color" image in which NIR, red, and green bands are combined. This representation is popular as it makes it easy to see the vegetation (in red).
 
 ```{r}
 
@@ -373,6 +373,15 @@ plotRGB(landsatFCC, stretch="lin")
 ```
 # Raster algebra
 
+**terra** makes it easy to carry out simple raster algebraic operations. Eahc band or layer is treated a 2D array which makes it possible to add, subtract, multiply, divide, etc. As a simple example here, we can calculate the NDVI for the Landsat scene as 
+
+\[
+NDVI = (NIR - R) / (NIR + R)
+\]
+
+NIR is band 5 and red is band 4:
+
+
 ```{r}
 
 ndvi <- (b5 - b4) / (b5 + b4)
@@ -380,6 +389,40 @@ ndvi <- (b5 - b4) / (b5 + b4)
 plot(ndvi, col=rev(terrain.colors(10)), main = "NDVI")
 
 ```
+
+We can also make a quick histogram of values to look for any outliers:
+
+```{r}
+
+hist(ndvi, main = "NDVI")
+
+```
+
+We can then use the results to carry out some simple classification.
+
+- Vegetation (NDVI > 0.4). The `clamp` function masks all value otuside of a range (here below 0.4)
+
+```{r}
+
+veg = clamp(ndvi, lower=0.4, values=FALSE)
+
+plot(veg)
+
+```
+
+- Croplands (corresponding to the peak in NDVI values):
+
+```{r}
+
+crops = ndvi > 0.25 & ndvi < 0.3 
+
+plot(crops)
+
+```
+
+
+And water bodies (NDVI < 0):
+
 ```{r}
 
 water = ndvi < 0
