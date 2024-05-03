@@ -1,0 +1,267 @@
+---
+title: "UGIC Workshop: 03 Data analysis in R"
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'UGIC_Workshop_03_Data_Analysis.html'))})
+author: | 
+  | Simon Brewer
+  | Geography Department
+  | University of Utah
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_caption: true
+header-includes:
+   - \usepackage{tabularx}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(42)
+```
+
+# Data analysis in R
+
+In this lab, we'll use some of the functions and methods we've looked at previously to carry out some simple data analysis for a couple of datasets. You'll need the following files for this lab (all should be available on the Google drive):
+
+# Example 1: Georgia income data
+
+In the first example, we'll explore variations in median income in Georgia at the county level. We'll start with some simple exploration and then move on to running some simple statistical analysis. First load the libraries that we'll need (these should all have been installed in previous labs):
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(sf)
+library(tmap)
+```
+
+Next, we'll read in the data. All the information we need is held in the the `georgia` shapefile, so load this with `st_read()`:
+
+```{r}
+georgia <- st_read("./data/georgia/georgia.shp")
+```
+
+This shapefile contains a number of variables for the counties including the percentage of the population in each County that:
+
+- is Rural (`PctRural`)
+- have a college degree (`PctBach`)
+- are elderly (`PctEld`)
+- that are foreign born (`PctFB`)
+- that are classed as being in poverty (`PctPov`)
+- that are black (`PctBlack`)
+
+and the median income of the county (`MedInc` in dollars)
+
+Check to make sure that the coordinate reference system is set:
+
+```{r results='hide'}
+st_crs(georgia)
+```
+
+## Exploration
+
+The variable we are interested in is the median income (`MedInc`). Remember you can check the column names with `names()` or the data structure with `str()`. Let's map this out to see if there's a pattern:
+
+```{r}
+tm_shape(georgia) +
+  tm_fill("MedInc", palette = 'viridis') +
+  tm_layout(legend.outside = TRUE)
+```
+
+There's a reasonably strong N-S gradient in income values, with higher values around Atlanta in the north, and Savannah on the southeastern coast. The values are in $/yr, we'll rescale them here to make the values a little more manageable:
+
+```{r}
+georgia <- georgia %>%
+  mutate(MedInc000 = MedInc / 1000)
+```
+
+Let's get some summary statistics on this variable: 
+
+```{r}
+summary(georgia$MedInc000)
+```
+
+And make a histogram showing the distribution:
+
+```{r}
+ggplot(georgia, aes(x = MedInc000)) +
+  geom_histogram(col = 'lightgray', fill = 'darkorange') +
+  scale_x_continuous("Median Income $000s") +
+  theme_bw()
+```
+
+The distribution of median income is *right-skewed*: most of the values fall between about $22K and $40K, but with a few higher values. Normally, we would log-transform these values before working with them further, as this reduces the skew. We'll skip that here to make some if the results more interpretable, but we can see what difference this would make by changing the x-axis to a log scale:
+
+```{r}
+ggplot(georgia, aes(x = MedInc000)) +
+  geom_histogram(col = 'lightgray', fill = 'darkorange') +
+  scale_x_log10("Median Income $000s") +
+  theme_bw()
+```
+
+## Statistical tests
+
+R comes with a large number of statistical tests. We'll just look here at the simplest, the $t$-test. The format of the output is broadly similar for most of these tests, so the interpretation we make here should transfer to other tests. 
+The $t$-test is a test for a significant difference of *means* between two groups. We'll create two groups using the `PctBach` variable (the percent of the population in each county with higher education degree). We'll split the counties by whether they are above the median `PctBach` value for the state:
+
+```{r}
+median(georgia$PctBach)
+```
+
+We'll use a combination of `mutate` and the `ifelse` function to create a new, binary variable:
+
+```{r}
+georgia <- georgia %>%
+  mutate(higher_ed = ifelse(PctBach > 10, "High", "Low"))
+```
+
+And we can use boxplots to examine the difference in median income for these two groups:
+
+```{r}
+ggplot(georgia, aes(x = higher_ed, y = MedInc000)) +
+  geom_boxplot() +
+  scale_y_continuous("Med Inc $000s") +
+  theme_bw()
+```
+
+We'll now run a $t$-test. For this, we need to define the variable containing the groups (`higher_ed`), and the variable we want to run the test on (`MedInc000`). 
+
+We define this using R's formula syntax. This syntax is used across a lot of test and modeling functions and is written as `y ~ x`, where `y` is the *dependent* variable (the one we want to test) and `x` is the independent (the one we want to use to run the test). We'll see this again in the next section:
+
+```{r}
+t.test(MedInc000 ~ higher_ed, georgia)
+```
+
+This test gives a lot of output, but the main ones are 
+
+- the test statistic (`t`): this is used in running the test (here a standardized difference)
+- the $p$-value: the significance level of the test. 
+
+When $t$ is high and the $p$-value is low ($<0.05$) as here, this indicates a significant difference between the two groups. 
+
+## Linear model
+
+Next, we'll build a simple regression model of the income values using the original values of percent higher education in each county. I'm sure you're familiar with this, but as a quick recap, this models the changes in a dependent variable as a function of an intercept ($\beta_0$) and a slope ($\beta_1$) times a covariate (`PctBach`):
+
+\[
+y = \beta_0 + \beta_1 x + e
+\]
+
+The `lm()` function is used in R to build simple linear regression models. This again uses the formula syntax described above. We'll fit this now, and use the `summary()` function to look at the results:
+
+```{r}
+fit_lm1 <- lm(MedInc000 ~ PctBach, data = georgia) 
+summary(fit_lm1)
+```
+
+There's a lot of output here, but the most important parts are:
+
+- A summary description of the residuals (look to see that the median is close to zero, and the 1st and 3rd quantiles are approximately equal)
+- The value, standard error and significance ($p$-values) of the coefficients
+- The amount of variance explained (R-squared)
+
+As a very quick interpretation, we have an intercept of `r round(coef(fit_lm1)[1], 1)` and a slope of `r round(coef(fit_lm1)[2], 1)`. The slope close to 1 suggests that median income increases by approximate $1,000 dollars for every percent increase in higher education. The R2 is around 0.27, indicating that 27% of the variation in income is explained by our model.
+
+We can visualize this model by using **ggplot2**'s `geom_smooth()` function to add a regression line to a scatter plots:
+
+```{r}
+ggplot(georgia, aes(x = PctBach, y = MedInc000)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
+```
+
+(This shows, again, the uneven distribution of values.)
+
+You can add more covariates to the model by extending the right hand side of the formula. Here we'll add the percent elderly and percent foreign born to explore their relationship with income
+
+```{r}
+fit_lm2 <- lm(MedInc000 ~ PctBach + PctEld + PctFB, data = georgia) 
+summary(fit_lm2)
+```
+
+The new covariates have negative coefficients, indicating the income declines as these increase in Georgia. The R$^2$ has increased to approaximately 0.47. 
+
+## Geographically weighted regression
+
+Regression models (and most other models) are aspatial and are commonly referred to as *global* models, as the model coefficients are assumed to hold true everywhere. In reality this assumption of spatial invariance is violated in many instances when geographic phenomena are considered. For example, the association between PctBach and MedInc, might be different in different places. 
+To assess this, we can use geographically weighted regression or GWR. This estimates a series of *local* models, one per spatial location. Each model is built on a subset of data: a set of locations in a window around the location of interest. As a results, the coefficients vary in space. The choice of window size is important, as it dictates the number of observations used in each local model, and so the quality of that model. While there has been several papers criticizing this approach as a complete modeling method, it is very useful for exploring potential variation in the relationship between dependent and independent variables
+
+We now build the GWR model using the **spgwr** package. Building a GWR model requires two steps, the first to assess the best window size, and the second to build and diagnose the local models using this window. The window can be chosen as
+
+- Fixed size: each window will have the same bandwidth or size, so models in data sparse areas will have fewer observations
+- Adaptive: rather than setting a single window size, the window for each model is chosen to capture the same number of observations
+
+Here, we will use the second method, by setting the parameter `adapt = TRUE` in the GWR function. We first need to extract polygon centroids for use in the distance calculations (these will be used to select the locations within a window around a point of interest).
+
+```{r warning=FALSE, message=FALSE}
+library(spgwr)
+
+georgia_crds = st_coordinates(st_centroid(georgia))
+plot(st_geometry(georgia))
+points(georgia_crds, pch = 16)
+```
+
+The `gwr.sel` function can be used to work out the optimum window size. It does this by removing a subset of the locations and testing how well the remaining locations can predict income for the subset. This is iterated across a set of bandwidths until the optimum is found. 
+
+```{r}
+gwr_bw = gwr.sel(MedInc000 ~ PctBach + PctEld + PctFB, 
+        coords = georgia_crds, data = georgia, adapt = TRUE)
+gwr_bw
+```
+
+As this is an adaptive bandwidth, the optimum value (0.069) indicates the proportion of counties that are included in each local model (about 7%). We can now use this to estimate the full set of local models (one per county):
+
+```{r}
+fit_gwr = gwr(MedInc000 ~ PctBach + PctEld + PctFB, 
+              coords = georgia_crds, data = georgia, adapt = gwr_bw)
+
+fit_gwr
+```
+
+The output of the model now contains a range of coefficient estimates for each variable showing how much these vary across Georgia. We can also visualize this, by extracting the values for each county. These are held in a object called `SDF` in the output of the `gwr()` function:
+
+```{r}
+fit_gwr$SDF
+```
+
+We can attach these back to the georgia `sf` object and make some maps:
+
+```{r}
+georgia$b_PctBach = fit_gwr$SDF$PctBach
+georgia$b_PctEld = fit_gwr$SDF$PctEld
+georgia$b_PctFB = fit_gwr$SDF$PctFB
+georgia$localR2 = fit_gwr$SDF$localR2
+```
+
+The last line extracts the local R2 (the R2 for each model). Now let's map some of these values:
+
+- Local R2
+```{r}
+tm_shape(georgia) +
+  tm_fill( "localR2", palette = "viridis", style = "kmeans") +
+  tm_layout(legend.position = c("right","top"), frame = F)
+```
+
+- Percent elderly
+
+```{r}
+tm_shape(georgia) +
+  tm_fill( "b_PctEld", palette = "viridis", style = "kmeans") +
+  tm_layout(legend.position = c("right","top"), frame = F)
+```
+
+This suggests that relationship between percent elderly and income is much stronger around the metropoloitan regions of the state
+
+- Percent Bachelors and Foreign born
+
+```{r}
+tm_shape(georgia) +
+  tm_fill(c("b_PctFB", "b_PctBach"),midpoint = 0, style = "kmeans") +
+  tm_style("col_blind")+
+  tm_layout(legend.position = c("right","top"), frame = F) 
+```
+
