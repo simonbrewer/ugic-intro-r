@@ -55,6 +55,6 @@ Tips on installing R and RStudio [here][install]
 All files for the hands-on exercises can be found here LINK DEAD
 
 [install]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_00_Installation.html
-[intro_R]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_01_Intro_R.html
+[intro_R]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_01_Introduction_R.html
 [spatial1]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_02_Spatial_Data_1.html
 [spatial2]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_02_Spatial_Data_2.html
