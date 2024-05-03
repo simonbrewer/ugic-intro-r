@@ -408,8 +408,38 @@ Darker shades on this map indicate areas with higher risks.
 
 ### Random forest
 
-Now let's repeat these steps with a random forest. There are several packages for this, but we'll use the **RandomForest** package, which is the oldest and most stable. 
+Now let's repeat these steps with a random forest. There are several packages for this, but we'll use the **RandomForest** package, which is the oldest and most stable. You should see that while we are using a different package and function to build the model, the formula syntax is exactly the same as before. You'll probbaly get a warning, which we'll ignore for now. 
+
+```{r warning=FALSE}
+library(randomForest)
+
+fit_rf <- randomForest(lslpts ~ slope + cplan + cprof + elev + log10_carea,
+                       data = lsl)
+```
+
+Now estimate the AUROC. We get a small improvement here, from 0.82 to about 0.85. 
 
 ```{r}
-
+lsl_pred <- predict(fit_rf)
+auc(roc(lsl_sf$lslpts, lsl_pred))
 ```
+
+And predict on the raster:
+
+```{r}
+pred = terra::predict(ta, model = fit_rf)
+
+m_rf <- tm_shape(pred) +
+  tm_raster() +
+  tm_shape(lsl_sf) +
+  tm_dots(size = 0.2) +
+  tm_layout(main.title = "Random Forest")
+m_rf
+```
+
+```{r}
+tmap_arrange(m_glm, m_rf)
+```
+
+
+
