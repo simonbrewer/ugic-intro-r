@@ -30,14 +30,15 @@ Tips on installing R and RStudio [here][install]
   - Data manipulation with `dplyr`
   - Simple plotting with `ggplot2`
   - Simple statistical analysis
-- 10:00-10:30: Introduction to spatial data in R
-  - `sf` objects, `terra`
+- 10:00-10:30: [Spatial data in R 1][spatial1]
+  - `sf` objects
   - Coordinate reference systems
+  - Manipulating spatial data
+  - Plotting with **ggplot2**
 - 10:30-11:00: Break
-- 11:00-12:30: Working with spatial data (hands on)
-  - Input/output (vector and raster)
-  - Simple spatial analysis
-  - Making maps (`tmap` and `ggplot2`)
+- 11:00-12:30: [Spatial data in R 2][spatial2]
+  - Raster data with **terra**
+  - Making maps (`tmap` and `leaflet`)
 - 12:30-1:30: Lunch
 - 1:30-2:30: Using R for data science 1 (hands on)
   - Brief introduction to data science
@@ -56,3 +57,5 @@ All files for the hands-on exercises can be found here LINK DEAD
 
 [install]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_00_Installation.html
 [intro_R]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_01_Intro_R.html
+[spatial1]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_02_Spatial_Data_1.html
+[spatial2]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_02_Spatial_Data_2.html
