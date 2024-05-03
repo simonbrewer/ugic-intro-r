@@ -24,30 +24,29 @@ Tips on installing R and RStudio [here][install]
 # Agenda
 
 - 8:30 – 9:00: Introduction to the R language and software 
-- 8:30 – 10:00: [Introduction to R][intro_R] (hands on)
+- 8:30 – 10:30: [Introduction to R][intro_R] (hands on)
   - Getting used to the interface
   - Basic data input/output
   - Data manipulation with `dplyr`
   - Simple plotting with `ggplot2`
-  - Simple statistical analysis
-- 10:00-10:30: [Spatial data in R 1][spatial1]
+- 10:30-11:00: Break
+- 11:00-11:30: Introduction to spatial data in R
+- 11:30-12:30: [Spatial data in R 1][spatial1]
   - `sf` objects
   - Coordinate reference systems
   - Manipulating spatial data
-  - Plotting with **ggplot2**
-- 10:30-11:00: Break
-- 11:00-12:30: [Spatial data in R 2][spatial2]
-  - Raster data with **terra**
-  - Making maps (`tmap` and `leaflet`)
+  - Plotting with `ggplot2`
 - 12:30-1:30: Lunch
-- 1:30-2:30: Using R for data science 1 (hands on)
-  - Brief introduction to data science
-  - Building a simple machine learning model
+- 1:30-2:30: [Spatial data in R 2][spatial2]
+  - Raster data with `terra`
+  - Making maps (`tmap` and `leaflet`)
 - 2:30-3:00 Break
-- 3:00-4:00: Using R for data science 2 (hands on)
-  - Machine learning workflows (preprocessing, variable selection)
-  - Assessing machine learning models
-- 4:00-5:00: Wrap-up, discussion etc
+- 3:00-4:30: Using R for (simple!) data analysis
+  - Inference tests
+  - Simple models
+  - GWR
+  - Simple machine learning
+- 4:30-5:00: Wrap-up, discussion etc
 
 - [Introduction to R][intro_R]
 
