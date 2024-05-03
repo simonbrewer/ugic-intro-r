@@ -433,9 +433,192 @@ plot(water)
 
 # Mapping packages
 
-## Mapview
+In the previous lab, we looked at making maps in base R (with the `plot()` function and an `sf` object) as well as using **ggplot2**. More recently, there has been something of an explosion in mapping packages, including interactive maps. We'll look here at three of these: **tmap**, **mapview** and **leaflet**. 
+```{r}
 
-## TMap
+library(sf)
+
+## Census tracts for Salt Lake County with population density
+tracts <- st_read("./data/slc_tract/slc_tract_2015.shp")
+## Salt Lake light rail tracks
+lightrail <- st_read("./data/LightRail_UTA/LightRail_UTA.shp")
+## Salt Lake light rail stations
+stations <- st_read("./data/LightRailStations_UTA/LightRailStations_UTA.shp")
+
+## Landsat images for California
+# Blue
+b2 <- rast('data/rs/LC08_044034_20170614_B2.tif')
+# Green
+b3 <- rast('data/rs/LC08_044034_20170614_B3.tif')
+# Red
+b4 <- rast('data/rs/LC08_044034_20170614_B4.tif')
+## Places for California
+ca_places <- st_read("./data/ca_places/ca_places.shp")
+
+## W North America Climate
+wna_climate <- read.csv("./data/WNAclimate.csv")
+## Natural Earth country shapefiles 
+countries <- st_read("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries.shp")
+## Natural Earth country rivers
+
+```
+
+## **tmap**
+
+**tmap** works in a very similar way to **ggplot2**, by building a series of layers and map geometries and elements. In general, we start by using `tm_shape()` to identify the spatial object to be used, and add geometries are added, including filled polygons, borders and symbols. Finally, we can add legends, scale bars, etc. Note that you will need to install this package if you haven't done so already (`install.packages("tmap")`).
+
+### Example 1: Salt Lake County
+
+We'll first make a map with a mixture of vector layers, including census tracts, light rail tracks and stations. Start by loading these
+
+```{r message=FALSE}
+
+library(sf)
+
+## Census tracts for Salt Lake County with population density
+tracts <- st_read("./data/slc_tract/slc_tract_2015.shp")
+## Salt Lake light rail tracks
+lightrail <- st_read("./data/LightRail_UTA/LightRail_UTA.shp")
+## Salt Lake light rail stations
+stations <- st_read("./data/LightRailStations_UTA/LightRailStations_UTA.shp")
+
+```
+
+If we check the CRS, you'll see that `tracts` has a different one, so will need to be reprojected:
+
+```{r}
+
+st_crs(tracts)$epsg
+
+st_crs(lightrail)$epsg
+
+```
+
+```{r}
+
+tracts <- st_transform(tracts, st_crs(lightrail))
+
+```
+
+Now let's start mapping things out with **tmap**. First, let's make a simple map showing the polygon outlines using `tm_borders()`. This is the standard **tmap** method: first define the object that you want to plot with `tm_shape`, then define what you want to plot. 
+
+```{r fig.keep='high', message=FALSE}
+
+library(tmap)
+
+tm_shape(tracts) + 
+  tm_borders()
+
+```
+
+The function `tm_fill()` will then fill these using one of the variables in the tract data set. We'll use the population density (`density`). Note that this automatically adds a legend within the frame of the figure:
+
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  tm_fill("density") +
+  tm_borders()
+
+```
+
+The color scale can be changed by setting the `palette` argument in `tm_fill()`. This includes the ColorBrewer scales described in the previous module, and the algorithm used to define the intervals. For example, to use the 'Greens' palette with percentile breaks. We also change the color of the tract boundaries to lightgray:
+
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  tm_fill("density", palette = "Greens", style = "quantile") +
+  tm_borders("lightgray")
+
+```
+
+You can reverse the color scale by prepending a `-` (`-Greens`). If you want to see the full set of palettes that you can use, install the **tmaptools** package and run the following code (you may also need to install **shinyjs**):
+
+```{r eval=FALSE}
+
+tmaptools::palette_explorer()
+
+```
+
+Let's now add another layer. We'll overlay the light rail track on this map. As this is a different object in R (`lightrail`), we first need to use `tm_shape` to indicate that we are using it, then add `tm_lines()` to show the routes. We'll make the lines a little thicker with `lwd` and change the type to `dashed`. 
+
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  tm_fill("density", palette = "Greens", style = "quantile") +
+  tm_borders("lightgray") +
+  tm_shape(lightrail) +
+  tm_lines(lwd = 2, lty = 'dashed', col = "darkorange")
+
+```
+
+Note that if you use a varible name for the color, it will thematically map the lines (I've removed the polygon fill to make this clear):
+
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  #tm_fill("density", palette = "Greens", style = "quantile") +
+  tm_borders("lightgray") +
+  tm_shape(lightrail) +
+  tm_lines(lwd = 4, col = "ROUTE")
+
+```
+We can now add the stations (using `tm_shape()` to select the correct object to plot):
+
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  tm_fill("density", palette = "Greens", style = "quantile") +
+  tm_borders("lightgray") +
+  tm_shape(lightrail) +
+  tm_lines(lwd = 2) +
+  tm_shape(stations) +
+  tm_dots(size = 0.25, shape = 23)
+
+```
+
+Now let's add some details to the map. We'll add a graticule before the polygons are plotted, a compass and a scalebar. We'll also use the `tm_layout` function to add a title and move the legend to a new position. (This function has a lot of options for changing your map - it's well worth checking the help page.)
+
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  tm_graticules(col = "lightgray") + 
+  tm_fill("density", title = "Popn density", palette = "Greens", style = "quantile") +
+  tm_borders("lightgray") +
+  tm_shape(lightrail) +
+  tm_lines(lwd = 2) +
+  tm_shape(stations) +
+  tm_dots(size = 0.25, shape = 23) +
+  tm_compass(position = c("left", "bottom")) +
+  tm_scale_bar(position = c("right", "top")) +
+  tm_layout(main.title = "Salt Lake County Light Rail", 
+            legend.outside = TRUE,
+            legend.outside.position = c("left"))
+
+```
+
+The map can be clipped to smaller regions by using the `bbox` argument in the first `tm_shape()` function. In this code, we'll extract a set of census tracts that correspond to downtown Salt Lake. We'll then use the the bounding box of these to crop the map (I've removed the fill). We'll also add the station name using `tm_text()`:
+
+```{r fig.keep='high', message=FALSE}
+
+tracts_sub = tracts %>%
+  dplyr::filter(TRACTCE %in% c(102500, 102600, 114000))
+
+tm_shape(tracts, bbox = st_bbox(tracts_sub)) + 
+  tm_borders("lightgray") +
+  tm_shape(lightrail) +
+  tm_lines(lwd = 2) +
+  tm_shape(stations) +
+  tm_dots(size = 0.25, shape = 23) +
+  tm_text("STATIONNAM", ymod = -1, bg.color = "white", size = 0.8)
+
+```
+
+### Example 2: W N America climate
+
+
+
+
+## Mapview
 
 ## Leaflet
 
