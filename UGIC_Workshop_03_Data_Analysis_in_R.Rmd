@@ -150,7 +150,7 @@ Next, we'll build a simple regression model of the income values using the origi
 y = \beta_0 + \beta_1 x + e
 \]
 
-The `lm()` function is used in R to build simple linear regression models. This again uses the formula syntax described above. We'll fit this now, and use the `summary()` function to look at the results:
+The `lm()` function is used in R to build simple linear regression models. This again uses the formula syntax described above, and we need to specify the R object that contains the variables for the model (`georgia`). We'll fit this now, and use the `summary()` function to look at the results:
 
 ```{r}
 fit_lm1 <- lm(MedInc000 ~ PctBach, data = georgia) 
@@ -265,3 +265,151 @@ tm_shape(georgia) +
   tm_layout(legend.position = c("right","top"), frame = F) 
 ```
 
+# Machine Learning in R
+
+Machine learning is a set of algorithms and methods that can identify patterns in data and predict from these patterns. This has a number of uses with spatial data, including predicting land cover or species occurrences, or with remote sensing data for segmentation and classification. Here, we'll use a set of landslide occurrences from southern Ecuador to make a map of landslide risk. We'll use a machine learning approach to examine what covariates are linked with landslides or absences of landslides, and then use a raster of these values to produce a full risk map.
+
+You'll need the following files to run this lab, so make sure you have them downloaded from the Google drive.
+
+- *lsl.csv*: a set of landslide locations, with associated terrain variables
+- *ta.tif*: a raster file with terrain variables for prediction
+- *mask.shp*: a study area mask
+
+You'll also need to install a package to help with machine learning (**mlr3**). This is a *meta*-package, and is used to help streamline the machine learning process by providing a standard interface to a large number of algorithms, as well as functions to test models. This comes as a set of packages, so the easiest is to install the whole set with (`install.packages("mlr3verse")`). We'll also be using the **pROC** package, so install that as well. Once installed, load the libraries we'll need:
+
+```{r}
+library(terra)
+library(dplyr)
+library(pROC)
+library(mlr3verse)
+```
+
+Next, we'll load the landslide occurrences:
+
+```{r}
+lsl <- read.csv("./data/lsl.csv")
+head(lsl)
+```
+
+This has a set of variables derived from a DEM that we used to build the model:
+
+- `slope`: slope angle (degrees)
+- `cplan`: plan curvature (rad m−1) expressing the convergence or divergence of a slope and thus water flow
+- `cprof`: profile curvature (rad m-1) as a measure of flow acceleration, also known as downslope change in slope angle
+- `elev`: elevation (m a.s.l.) as the representation of different altitudinal zones of vegetation and precipitation in the study area
+- `log10_carea`: the decadic logarithm of the catchment area (log10 m2) representing the amount of water flowing towards a location
+
+As we need to be able to contrast where landslides have occurred, with where they have not, the file contains a column `lslpts` that indicates for each location if there was a landslide (`TRUE`) or if it is a background point without a landslide (`FALSE`). We will need to make this a `factor` - this is a particular R data type used to differentiate categorical data.
+
+```{r}
+lsl <- lsl %>% 
+  mutate(lslpts_f = factor(lslpts))
+```
+
+We'll also use this dataframe to create an `sf` object to see the locations:
+
+```{r}
+lsl_sf <- st_as_sf(lsl, coords = c("x", "y"),
+                   crs = 32717)
+```
+
+Next, we'll read in the mask data, and map the locations within the mask:
+
+```{r}
+lsl_mask <- st_read("./data/mask/study_mask.shp")
+
+tm_shape(lsl_mask) +
+  tm_borders() +
+  tm_shape(lsl_sf) +
+  tm_symbols(col = "lslpts", size = 0.75, alpha = 0.7)
+```
+
+You should be able to see that the landslides (yellow) tend to cluster in the center of the study region. 
+
+Next, read in the raster data using **terra**. This has raster layers with the same variables in the `lsl` object. Note that it is important that the names of these layers match the column names in the dataframe exactly for prediction. We'll also use the mask to crop out the study area:
+
+```{r}
+ta = rast("./data/ta.tif")
+ta = mask(ta, mask = lsl_mask)
+plot(ta)
+```
+
+If we add the locations to the elevation layer, you see that the cluster tends to occur at mid-elevations.
+
+```{r}
+tm_shape(ta['elev']) +
+  tm_raster(palette = '-Greens', style = 'cont') +
+  tm_shape(lsl_mask) +
+  tm_borders() +
+  tm_shape(lsl_sf) +
+  tm_symbols(col = "lslpts", size = 0.5, alpha = 0.7) +
+  tm_layout(legend.outside = TRUE)
+```
+
+## Modeling
+
+We'll start by building two relatively simple models to predict landslide risk. We'll use a logistic regression model (similar to the linear model above, but designed for binary outcomes), and a random forest, a widely used machine learning method. For each of these, we'll do three things:
+
+- Build the model
+- Assess the model predictions using the AUROC score
+- Predict using the values in the `ta` raster object to get a map of risk
+
+### Logistic regression
+
+Logistic models can be fit in R using the `glm()` function. This is designed for regression models that don't have continuous outcomes (in contrast to `lm()` that we used above). As before, we need to define:
+
+- The formula that relates a dependent variable to the independent(s)
+- The dataset containing the variables
+
+We also need to define a `family`. For binary outcomes, this needs to be set to `binomial`:
+
+```{r}
+fit_glm <- glm(lslpts ~ slope + cplan + cprof + elev + log10_carea,
+               family = binomial(),
+               data = lsl)
+```
+
+If you;d like to see the output of the model (e.g. coefficients), run `summary(fit_glm)`. I'm skipping this step here. 
+
+Next, we'll test the prediction using the AUROC. This stands for Area Under the Receiver Operating Characteristic curve. The full explanation is a little complex, but essentially we use the model to predict a risk value for each of the observed points with `fitted()`. The AUROC compares these to the observed presence or absence of landslides. AUROC values can range from 0 to 1, but we really need values above 0.5 to indicate a reasonable prediction (a value of 0.5 indicates that the model is no better than flipping a coin!). 
+
+First, get predicted values for each location:
+
+```{r}
+lsl_pred <- fitted(fit_glm)
+head(lsl_pred)
+```
+
+You'll see here that the predictions are made as a probability (i.e. in the range [0-1]). Now, let's estimate the AUROC:
+
+```{r}
+auc(roc(lsl_sf$lslpts, lsl_pred))
+```
+
+Giving a value of about 0.82, which is a pretty decent skill. Now, let's predict across the raster to get our risk map. A note here, we want to use the `predict()` function from the **terra** package, as this will return predictions as a raster layer. To force this, we prepend the name of the packahe (`terra::`) before the function. 
+
+```{r}
+pred <- terra::predict(ta, model = fit_glm, type = "response")
+```
+
+Finally, we can make our map:
+
+```{r}
+m_glm <- tm_shape(pred) +
+  tm_raster() +
+  tm_shape(lsl_sf) +
+  tm_dots(size = 0.2) +
+  tm_layout(main.title = "GLM")
+
+m_glm
+```
+
+Darker shades on this map indicate areas with higher risks. 
+
+### Random forest
+
+Now let's repeat these steps with a random forest. There are several packages for this, but we'll use the **RandomForest** package, which is the oldest and most stable. 
+
+```{r}
+
+```
