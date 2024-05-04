@@ -26,18 +26,14 @@ knitr::opts_chunk$set(echo = TRUE,
 
 In this lab, we will explore some of R's functionality with spatial data, with special attention given to the **sf** package. For more information about `sf`, you can visit their [website](https://r-spatial.github.io/sf/). Robin Lovelace's book _Geocomputation with R_ (available [online](https://geocompr.robinlovelace.net/)) is also a really helpful and educational source for learning **sf**. For some of the longer examples, it is highly recommended to use R's scripting functions to run the examples to save on re-typing.  
 
-Next download the following files Google drive and move them to your `data` folder:
+Next download the following files from the Google drive and move them to your `data` folder:
 
 - Climate dataset for Western North America: *WNAclimate.csv*
-- Temperature dataset for Oregon in shapefile format: *oregon.zip*
-- New York state polygon data in a shapefile: *NY_Data.zip*
-- Digital elevation map from Switzerland: *swiss_dem.grd*
-- A NetCDF file of global monthly air temperature: *air.mon.ltm.nc*
-- A NetCDF file of global monthly mean air temperature: *air.mon.mean.nc*
-- A dataset of country socioeconomic variables: *countries.zip*
+- A shapefile of UTA light rail routes: *LightRail_UTA.shp*
+- A shapefile of UTA light rail stations: *LightRailStations_UTA.shp*
+- A shapefile of Utah counties: *utahcounty.shp*
 
-Make sure to unzip the zip files so that R can access the content. Note that on Windows, you will need to right-click on the file and select 'Extract files'.  
-
+Note for the shapefiles, you will need to download the full folder for each one to get the shapefile and the associated extra files. If you are not sure about this, please let me know.
 
 Base R has no structure for spatial data, so you will need to install the following packages (you should have some of these from previous modules):
 
@@ -603,7 +599,7 @@ plot(st_geometry(filtered_pnts),
 
 <br>
 
-##### __Topological Relations__
+### Topological Relations
 
 Internally, `st_filter` assumes a "topological" or spatial relationship defined by what the `sf` authors refer to as spatial predicate (`.predicate`). By default, `st_intersects` works to find the geometry of one object located within another. We can, however, specify other spatial relationships. For example, to get all the points _outside_ Salt Lake:
 
