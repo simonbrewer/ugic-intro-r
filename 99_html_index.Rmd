@@ -41,7 +41,7 @@ Tips on installing R and RStudio [here][install]
   - Raster data with `terra`
   - Making maps (`tmap` and `leaflet`)
 - 2:30-3:00 Break
-- 3:00-4:30: Using R for (simple!) data analysis
+- 3:00-4:30: [Using R for (simple!) data analysis][analysis]
   - Inference tests
   - Simple models
   - GWR
@@ -56,4 +56,5 @@ All files for the hands-on exercises can be found [here][gdrive]
 [intro_R]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_01_Introduction_R.html
 [spatial1]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_02_Spatial_Data_1.html
 [spatial2]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_02_Spatial_Data_2.html
+[analysis]: https://simonbrewer.github.io/ugic-intro-r/UGIC_Workshop_03_Data_Analysis.html
 [gdrive]: https://drive.google.com/drive/folders/1sE--X8YfUxq5gZPNQz4Zjk6uBeAcIBn3?usp=sharing
