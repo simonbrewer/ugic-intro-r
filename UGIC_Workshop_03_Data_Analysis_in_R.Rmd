@@ -30,7 +30,7 @@ In this lab, we'll use some of the functions and methods we've looked at previou
 
 # Example 1: Georgia income data
 
-In the first example, we'll explore variations in median income in Georgia at the county level. We'll start with some simple exploration and then move on to running some simple statistical analysis. First load the libraries that we'll need (these should all have been installed in previous labs):
+In the first example, we'll explore variations in median income in Georgia at the county level. This example is modified from Alex Comber's GEOG 3915 GeoComputation class. We'll start with some simple exploration and then move on to running some simple statistical analysis. First load the libraries that we'll need (these should all have been installed in previous labs):
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -267,7 +267,7 @@ tm_shape(georgia) +
 
 # Machine Learning in R
 
-Machine learning is a set of algorithms and methods that can identify patterns in data and predict from these patterns. This has a number of uses with spatial data, including predicting land cover or species occurrences, or with remote sensing data for segmentation and classification. Here, we'll use a set of landslide occurrences from southern Ecuador to make a map of landslide risk. We'll use a machine learning approach to examine what covariates are linked with landslides or absences of landslides, and then use a raster of these values to produce a full risk map.
+Machine learning is a set of algorithms and methods that can identify patterns in data and predict from these patterns. This has a number of uses with spatial data, including predicting land cover or species occurrences, or with remote sensing data for segmentation and classification. Here, we'll use a set of landslide occurrences from southern Ecuador to make a map of landslide risk. We'll use a machine learning approach to examine what covariates are linked with landslides or absences of landslides, and then use a raster of these values to produce a full risk map. This example is modified from Robin Lovelace's Geocomputation in R book. 
 
 You'll need the following files to run this lab, so make sure you have them downloaded from the Google drive.
 
@@ -277,7 +277,7 @@ You'll need the following files to run this lab, so make sure you have them down
 
 You'll also need to install a package to help with machine learning (**mlr3**). This is a *meta*-package, and is used to help streamline the machine learning process by providing a standard interface to a large number of algorithms, as well as functions to test models. This comes as a set of packages, so the easiest is to install the whole set with (`install.packages("mlr3verse")`). We'll also be using the **pROC** package, so install that as well. Once installed, load the libraries we'll need:
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(terra)
 library(dplyr)
 library(pROC)
@@ -315,7 +315,7 @@ lsl_sf <- st_as_sf(lsl, coords = c("x", "y"),
 
 Next, we'll read in the mask data, and map the locations within the mask:
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 lsl_mask <- st_read("./data/mask/study_mask.shp")
 
 tm_shape(lsl_mask) +
@@ -441,5 +441,131 @@ m_rf
 tmap_arrange(m_glm, m_rf)
 ```
 
+### Cross-validation
 
+In the previous section, we built and tested two model. However, the AUROC values that we used to compare them are not a good estimate of *predictive* skill. The reason for this is that we used the same set of data to build and then test the model - the test is not an independent assessment. To get around this, we can use a cross-validation approach to model testing. In this, the dataset is split into two: a training set used to build the model, and a testing set used to, well, test it. As the test set is not used to train or build the model, it is considered independent (the model does not 'see' these data), and the resulting test is a better estimate of predictive skill. 
 
+While you can set up and run cross-validation by hand, it's generally easaier to do this with a helper package. We'll use **mlr3** that you installed and loaded earlier. We need to define a series of things to make this work:
+
+#### A `task`
+
+This defines the dataset, the outcome or target variable and the independent or features used to model the outcome. This needs to have at a minimum:
+- The `backend`: the dataframe or obkect holding the data
+- The `target`: the variable in the backend that we want to predict
+
+The function to create this is `TaskClassif`. This is designed for binary or categorical outcomes. There is equally a `TaskRegr` for continuous outcomes. 
+
+```{r}
+lsl_task <- TaskClassif$new(id = "lsl", backend = lsl, 
+                            target = "lslpts_f")
+```
+
+We can check how this is set up (i.e. what is the target and the features/variables):
+
+```{r}
+lsl_task$col_roles
+```
+
+Note that this includes the coordinates and the original landslide labels, so we'll exclude these so they are not used in the model:
+
+```{r}
+lsl_task$col_roles$feature <- setdiff(lsl_task$col_roles$feature,
+                                      c("x", "y", "lslpts"))
+lsl_task$feature_names
+```
+
+#### A `measure`
+
+This is score that is used to assess how well the model predicts, and is defined using `msr()`. We'll use two here: the AUROC () and the accuracy (the proportion of points that are correctly predicted)
+
+```{r}
+msr_auc = msr("classif.auc")
+msr_acc = msr("classif.acc")
+```
+
+If you want to see the full set of measures, just run the following code:
+
+```{r results='hide'}
+mlr_measures
+```
+
+#### A `resampling`
+
+This is the cross-validation strategy; the way in which the data will be split into training and testing, and is defined using `rsmp`()`. We'll use a $k$-fold cross-validation (`cv`). This splits the data $k$ times. So for a 5-fold CV, the data is split into 80% training and 20% testing, and then this is repeated 4 more times. This ensures that all datapoints are used once in the testing set and gives an exhaustive evaluation.
+
+```{r}
+rsmp_cv = rsmp("cv", folds = 5)
+```
+
+If you want to see the full set of resampling strategies, just run the following code:
+
+```{r results='hide'}
+mlr_resamplings
+```
+
+#### A `learner`
+
+The machine learning algorithm to be used, this is defined using `lrn()`. We'll use a logistic model again (`classif.log_reg`):
+
+```{r}
+lrn_glm = lrn("classif.log_reg", 
+              predict_type = "prob")
+```
+
+If you want to see the full set of learners, just run the following code:
+
+```{r results='hide'}
+mlr_learners
+```
+
+#### Running the cross-validation
+
+Now all this is defined, we can actually run the cross-validation and get the results. The function to run this is called `resample()`, and has arguments for the task, the learner and the cross-validation. 
+
+```{r}
+rr_glm = resample(lsl_task, 
+                  lrn_glm, 
+                  rsmp_cv, 
+                  store_models = TRUE)
+```
+This should run pretty quickly, and all the results are stored in `rr_glm`. We asked the function to store the individual models, and you can access them (if you need to) with `rr_glm$learners`. 
+
+You can now get the average AUROC and accuracy for the 5 models with:
+
+```{r}
+rr_glm$aggregate(c(msr_auc, msr_acc))
+```
+
+You can also see the values for the individual folds with:
+
+```{r}
+rr_glm$score(msr_auc)
+```
+
+#### Changing learners
+
+This all probably seems like a lot of effort to get to this point, but now we have everything set up, it is very easy to test different machine learning algorithms. All we have to do is define a new learner (here a random forest), re-run the resampling and check the resulting scores:
+
+```{r}
+
+lrn_rf = lrn("classif.ranger", 
+             predict_type = "prob", 
+             importance = "permutation")
+
+rr_rf = resample(lsl_task, 
+                  lrn_rf, 
+                  rsmp_cv, 
+                  store_models = TRUE)
+rr_rf$aggregate(c(msr_auc, msr_acc))
+
+```
+
+Our final AUROC score for the random forest is `r round(rr_rf$aggregate(c(msr_auc)), 3)`. These scores are overall similar to the results from the non-independent test earlier, but are now a much more robust estimate of predictive skill.
+
+# Final thoughts
+
+These two exercises have introduced some basic statistical and machine methods in R, but they barely scratch the surface of what is possible. There are many other methods and approaches out there. Here's a very shortlist of possible resource that may be helpful:
+
+- CRAN taskviews: https://cran.r-project.org/web/views/
+- Geocomputation in R: https://r.geocompx.org/
+- John Verzani's introductory statistics in R: https://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf
