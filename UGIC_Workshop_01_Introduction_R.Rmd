@@ -134,6 +134,10 @@ Before proceeding with the rest of today's lab, make sure to change your working
 
 If this all seems a little foreign to you, don't worry - there will be plenty of opportunities to practice this over the day. Understanding the directory structure is very important in being able to manage your files both for this training session and any analysis you will do later. 
 
+## R Projects
+
+R Projects offer another way to manage your work in R. These group together a set of scripts and data held within a folder into a single project, detailed in an `RProj` file. We won't use these here, but if you are planning to use R for a lot of different analyses and work, these are an excellent way to keep things organized. 
+
 ## Using the console
 
 In the console, the '`>`' is the prompt, and your commands will be entered here. Click on the console window, then enter the following:
@@ -166,7 +170,7 @@ If you now look in the top right corner in the 'Environment' window, you should 
 a + b
 ```
 
-#File input and output
+# File input and output
 
 R can use many different file types, but comma separated value (csv) files are most frequently used as the easiest way to transfer between R and Excel. Make sure you have changed your working directory to the `ugic2024` folder. Then get a list of csv files in the `data` folder as follows (note the use of the pattern parameter to get only certain files):
 
@@ -1018,8 +1022,6 @@ When you are finished with R, exit by typing `q()` in the console (or going to [
 ```{r eval=FALSE}
 load(".RData")
 ```
-
-
 
 # Where to get help
 
