@@ -654,7 +654,7 @@ tm_shape(wna_climate) +
   tm_symbols(col = "Jul_Tmp")
 ```
 
-Next, we'll download country outlines and river centerlines from [Natural Earth][natEarthID] using the **rnaturalearth** package (you will need to install this). This will download layers from the Natural Earth website - there are a variety of these available, including country and state boundaries, physical features (rivers, lakes, etc) and cultural features (place names, roads, etc). There are three levels of resolution: 1:10m, 1:50m and 1:110m. To download a layer, you need to specify the resolution (`scale`) and the name of the layer. The full set can be found [here][rneid]
+Next, we'll download country outlines and river centerlines from [Natural Earth][natEarthID] using the **rnaturalearth** package (you will need to install this). This will download layers from the Natural Earth website - there are a variety of these available, including country and state boundaries, physical features (rivers, lakes, etc) and cultural features (place names, roads, etc). There are three levels of resolution: 1:10m, 1:50m and 1:110m. To download a layer, you need to specify the resolution (`scale`) and the name of the layer. The full set of available layers can be found [here][rneid]
 
 ```{r message=FALSE, results='hide'}
 
@@ -901,7 +901,6 @@ leaflet() %>%
 [colBrewID]: http://colorbrewer2.org
 [iconID]: https://sites.google.com/site/gmapsdevelopment/
 [natEarthID]: https://www.naturalearthdata.com
-[tmapID]: https://cran.r-project.org/web/packages/tmap/
+[tmapid]: https://r-tmap.github.io/tmap/
 [gdalfiles]: https://gdal.org/drivers/raster/index.html
 [rneid]: https://cran.r-project.org/web/packages/rnaturalearth/vignettes/rnaturalearth.html
-[tmapid]: https://r-tmap.github.io/tmap/
