@@ -41,7 +41,7 @@ library(tmap)
 Next, we'll read in the data. All the information we need is held in the the `georgia` shapefile, so load this with `st_read()`:
 
 ```{r}
-georgia <- st_read("./data/georgia/georgia.shp")
+georgia <- st_read("./data/georgia/georgia.shp", quiet = TRUE)
 ```
 
 This shapefile contains a number of variables for the counties including the percentage of the population in each County that:
@@ -104,6 +104,29 @@ ggplot(georgia, aes(x = MedInc000)) +
 
 ### Hotspot analysis
 
+Very briefly, we'll also demonstrate a simple form of spatial exploration with hotspot analysis. This is based on the Getis-Ord $G$ statistic, and indicates of there are parts of a region that have much higher (hotspot), or much lower (coldspot), values than might be expected. If you want to run this, you will need to install the `spdep` library, and then carry out the following steps:
+
+- Construct a neighborhood function with `poly2nb` - this identifies which spatial locations are considered to be neighbors of each other
+- Convert this into a spatial weight matrix with `nb2listw` - a numeric representation of the neighborhoods
+- Use this to calculate the $G$ statistic with `localG`
+
+```{r}
+library(spdep)
+nb <- poly2nb(georgia)
+lw <- nb2listw(nb)
+georgia_localG <- localG(georgia$MedInc000, 
+                         listw = lw)
+```
+
+Once run, we can plot the map, which not too surprisingly shows hotspots around Atlanta and on the coast. 
+
+```{r}
+georgia$lG <- georgia_localG
+tm_shape(georgia) +
+  tm_fill("lG", palette = "-RdBu") +
+  tm_borders('lightgray') +
+  tm_layout(main.title = "Getis Ord G Values")
+```
 
 
 ## Statistical tests
