@@ -524,7 +524,7 @@ tm_shape(tracts) +
 
 ```
 
-The color scale can be changed by setting the `palette` argument in `tm_fill()`. This includes the ColorBrewer scales described in the previous module, and the algorithm used to define the intervals. For example, to use the 'Greens' palette with percentile breaks. We also change the color of the tract boundaries to lightgray:
+The color scale can be changed by setting the `palette` argument in `tm_fill()`. This includes ColorBrewer and viridis scales and there are a set of methods todefine the intervals in the color palette. For example, to use the 'Greens' palette with percentile breaks. We also change the color of the tract boundaries to lightgray:
 
 ```{r fig.keep='high', message=FALSE}
 
@@ -533,8 +533,19 @@ tm_shape(tracts) +
   tm_borders("lightgray")
 
 ```
+You can reverse the color scale by prepending a `-`. This uses a reversed `magma` palette from the viridis set, with a continuous palette:
 
-You can reverse the color scale by prepending a `-` (`-Greens`). If you want to see the full set of palettes that you can use, install the **tmaptools** package and run the following code (you may also need to install **shinyjs**):
+```{r fig.keep='high', message=FALSE}
+
+tm_shape(tracts) + 
+  tm_fill("density", palette = "-magma", style = "cont") +
+  tm_borders("lightgray")
+
+```
+
+
+
+If you want to see the full set of palettes that you can use, install the **tmaptools** package and run the following code (you may also need to install **shinyjs**):
 
 ```{r eval=FALSE}
 
