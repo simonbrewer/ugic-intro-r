@@ -102,6 +102,10 @@ ggplot(georgia, aes(x = MedInc000)) +
   theme_bw()
 ```
 
+### Hotspot analysis
+
+
+
 ## Statistical tests
 
 R comes with a large number of statistical tests. We'll just look here at the simplest, the $t$-test. The format of the output is broadly similar for most of these tests, so the interpretation we make here should transfer to other tests. 
@@ -344,6 +348,27 @@ tm_shape(ta['elev']) +
   tm_shape(lsl_sf) +
   tm_symbols(col = "lslpts", size = 0.5, alpha = 0.7) +
   tm_layout(legend.outside = TRUE)
+```
+
+### Terrain characteristics in **terra**
+
+This is an otpional section. In this dataset, the terrain characteristics (slope, aspect, etc) were precalculated. The **terra** package has a function to estimate these (`terrain`) from a DEM. The following code estimates the slope and aspect in radians, then uses the `shade()` function to create a hill shading map. This has arguments to position the light source (`angle` = azimuth, `direction` = direction):
+
+```{r}
+slope <- terrain(ta['elev'], "slope", unit = 'radians')
+
+aspect <- terrain(ta['elev'], "aspect", unit = 'radians')
+
+hs <- shade(slope, aspect, angle = 45, direction = 90)
+```
+
+We can then use this as a base map in **tmap**, and overlay another raster layer with a transparency (`alpha`):
+
+```{r}
+tm_shape(hs) +
+  tm_raster(palette = "Greys", legend.show = FALSE) +
+  tm_shape(ta['elev']) +
+  tm_raster(palette = '-Greens', alpha = 0.35, legend.show = FALSE)
 ```
 
 ## Modeling
