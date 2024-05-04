@@ -437,7 +437,9 @@ plot(water)
 
 In the previous lab, we looked at making maps in base R (with the `plot()` function and an `sf` object) as well as using **ggplot2**. More recently, there has been something of an explosion in mapping packages, including interactive maps. We'll look here at two of these: **tmap** and **leaflet**. Other useful ones include **mapsf** **highcharter**, **mapview** and **mapdeck**. 
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE, results='hide'}
+
+sf_use_s2(FALSE)
 
 library(sf)
 
@@ -447,6 +449,9 @@ tracts <- st_read("./data/slc_tract/slc_tract_2015.shp")
 lightrail <- st_read("./data/LightRail_UTA/LightRail_UTA.shp")
 ## Salt Lake light rail stations
 stations <- st_read("./data/LightRailStations_UTA/LightRailStations_UTA.shp")
+
+## W North America Climate
+wna_climate <- read.csv("./data/WNAclimate.csv")
 
 ## Landsat images for California
 # Blue
@@ -458,36 +463,15 @@ b4 <- rast('data/rs/LC08_044034_20170614_B4.tif')
 ## Places for California
 ca_places <- st_read("./data/ca_places/ca_places.shp")
 
-## W North America Climate
-wna_climate <- read.csv("./data/WNAclimate.csv")
-## Natural Earth country shapefiles 
-countries <- st_read("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries.shp")
-## Natural Earth country rivers
-
 ```
 
-## **tmap**
+## `tmap`
 
-**tmap** makes thematic maps. It works in a very similar way to **ggplot2**, by building a series of layers and map geometries and elements. In general, we start by using `tm_shape()` to identify the spatial object to be used, and add geometries are added, including filled polygons, borders and symbols. Finally, we can add legends, scale bars, etc. Note that you will need to install this package if you haven't done so already (`install.packages("tmap")`).
+**tmap** makes thematic maps. It works in a very similar way to **ggplot2**, by building a series of layers and map geometries and elements. In general, we start by using `tm_shape()` to identify the spatial object to be used, and add geometries are added, including filled polygons, borders and symbols. Finally, we can add legends, scale bars, etc. Note that you will need to install this package if you haven't done so already (`install.packages("tmap")`). We'll look at three examples of working with this package here, but there are a lot more details and examples on the [TMap website][tmapid].
 
 ### Example 1: Salt Lake County
 
-We'll first make a map with a mixture of vector layers, including census tracts, light rail tracks and stations. Start by loading these
-
-```{r message=FALSE}
-
-library(sf)
-
-## Census tracts for Salt Lake County with population density
-tracts <- st_read("./data/slc_tract/slc_tract_2015.shp")
-## Salt Lake light rail tracks
-lightrail <- st_read("./data/LightRail_UTA/LightRail_UTA.shp")
-## Salt Lake light rail stations
-stations <- st_read("./data/LightRailStations_UTA/LightRailStations_UTA.shp")
-
-```
-
-If we check the CRS, you'll see that `tracts` has a different one, so will need to be reprojected:
+We'll first make a map with a mixture of vector layers, including census tracts, light rail tracks and stations. If we check the CRS, you'll see that `tracts` has a different one, so will need to be reprojected:
 
 ```{r}
 
@@ -654,13 +638,9 @@ tmap_mode("plot")
 
 ### Example 2: W N America climate
 
-In this example, we'll map out the climate data from western North America. We'll go a bit faster in this example and not explain every step. First read in the data and create an `sf` object:
+In this example, we'll map out the climate data from western North America. We'll go a bit faster in this example and not explain every step. First we'll need to convert the `wna_climate` data frame to an `sf` object:
 
 ```{r}
-
-sf_use_s2(FALSE)
-
-wna_climate <- read.csv("./data/WNAclimate.csv")
 
 wna_climate <- st_as_sf(wna_climate, 
                         coords = c("LONDD", "LATDD"),
@@ -676,7 +656,7 @@ tm_shape(wna_climate) +
 
 Next, we'll download country outlines and river centerlines from [Natural Earth][natEarthID] using the **rnaturalearth** package (you will need to install this). This will download layers from the Natural Earth website - there are a variety of these available, including country and state boundaries, physical features (rivers, lakes, etc) and cultural features (place names, roads, etc). There are three levels of resolution: 1:10m, 1:50m and 1:110m. To download a layer, you need to specify the resolution (`scale`) and the name of the layer. The full set can be found [here][rneid]
 
-```{r}
+```{r message=FALSE, results='hide'}
 
 library(rnaturalearth)
 
@@ -770,7 +750,7 @@ tm_shape(landsat_stretch) +
 
 ```
 
-## Leaflet
+## `leaflet`
 
 The **tmap** mode function allows you to quickly make an interacitve map. The resulting map is based on the well-known Leaflet javascript library, which offers a much greater range of flexibility in making these maps. Fortunately, there is an R library (**leaflet**) that allows access to the Leaflet API allowing you to build quite complex maps from R. We'll remake the map of Salt Lake County and the light rail routes using this now. First install the library (`install.packages("leaflet")`), and load it (and a helper library for working with html formats):
 
@@ -924,3 +904,4 @@ leaflet() %>%
 [tmapID]: https://cran.r-project.org/web/packages/tmap/
 [gdalfiles]: https://gdal.org/drivers/raster/index.html
 [rneid]: https://cran.r-project.org/web/packages/rnaturalearth/vignettes/rnaturalearth.html
+[tmapid]: https://r-tmap.github.io/tmap/
