@@ -26,11 +26,9 @@ set.seed(42)
 
 # Introduction to R
 
-In this lab, we will introduce the basic functionality of R, together with some simple plotting functions. We will be using the following files for these examples:
+In this lab, we will introduce the basic functionality of R, together with some simple plotting functions. We will be using a dataset of morphological measurements of three species of penguin from the file *penguins.csv*. You will need to download this from the Google Drive [here](https://drive.google.com/drive/folders/1sE--X8YfUxq5gZPNQz4Zjk6uBeAcIBn3?usp=sharing).
 
-- A dataset of morphological measurements of three species of penguin from the file *penguins.csv*
-
-More information about this dataset can be found here: [https://allisonhorst.github.io/palmerpenguins/index.html](https://allisonhorst.github.io/palmerpenguins/index.html)
+More information about this dataset can be found here: [https://allisonhorst.github.io/palmerpenguins/index.html](https://allisonhorst.github.io/palmerpenguins/index.html).
 
 ## A quick note on formatting
 
@@ -132,7 +130,7 @@ setwd("../")
 
 Before proceeding with the rest of today's lab, make sure to change your working directory back to `ugic2024`. 
 
-If this all seems a little foreign to you, don't worry - there will be plenty of opportunities to practice this over the day. Understanding the directory structure is very important in being able to manage your files both for this training session and any analysis you will do later. 
+If this all seems a little foreign to you, don't worry - there will be plenty of opportunities to practice this over the day, but ask if you would like to see this demonstrated. Understanding the directory structure is very important in being able to manage your files both for this training session and any analysis you will do later. 
 
 ## R Projects
 
@@ -146,7 +144,7 @@ In the console, the '`>`' is the prompt, and your commands will be entered here.
 2+2
 ```
 
-And press 'Enter', and R will tell you, not too surprisingly, that 2+2=4. The spacing is not important: you could equally enter `2 + 2` or `2+ 2` and get the same result. The `[1]` before the output is a vector index. It refers to the first value in the *output* vector (here a vector of length 1). We'll be using this later.
+And press 'Enter', and R will tell you, not too surprisingly, that 2+2=4. The spacing is not important: you could equally enter `2 + 2` or `2+ 2` and get the same result. The `[1]` before the output is a vector index. It refers to the first value in the *output* vector (here a vector of length 1). We'll look at indexes in more detail later.
 
 We can equally use standard math functions, for example, to take the natural log or square root of 2:
 
@@ -155,9 +153,15 @@ log(2)
 sqrt(2)
 ```
 
+Or to get the square of a number:
+
+```{r}
+4^2
+```
+
 ## Asssigning output
 
-So far, these commands have runs some calculations and displayed the results in the console. If you need to store any R output for further use, you will need to assign to to a variable. There are two assignment operators in R `<-` and `=`. These are interchangeable, and you will see both used in R examples. To store the results of the previous commands:
+So far, these commands have runs some calculations and displayed the results in the console. If you need to store any R output for further use, you will need to assign the output to to a variable. There are two assignment operators in R `<-` and `=`. These are interchangeable, and you will see both used in R examples. To store the results of the previous commands:
 
 ```{r}
 a = log(2)
@@ -178,15 +182,15 @@ R can use many different file types, but comma separated value (csv) files are m
 list.files("./data/", pattern=".csv")
 ```
 
-Let's read in the data from the Penguin file (*penguins.csv*, make sure this appeared in the list from the previous command and ask me if you don't see it). CSV files can be read in using the `read.csv()` function:
+Let's read in the data from the Penguin file (*penguins.csv*). Make sure you've downloaded it from the Google drive and copied it to the correct folder - and let me know if you can't load it. CSV files can be read in using the `read.csv()` function:
 
 ```{r}
 penguin <- read.csv("./data/penguins.csv")
 ```
 
-Note that because this file is held in a different folder (`data`) to your current working directory (`ugic2024`), you need to provide the relative path (`./data`). 
+Note that because this file is held in a different folder (`data`) to your current working directory (`ugic2024`), you need to provide the relative path (`./data/`). 
 
-The first part of this code (`penguin <-`) tells R to store the data read in from the file in a *data frame* called `penguin`. To print out the contents of any object in R, simply type the name of that object at the command prompt.
+The first part of this code (`penguin <-`) tells R to store the data read in from the file in a *data frame* called `penguin` (you can call this anything, but generally it's advisable to use a name that will help remind you what the data is). To print out the contents of any object in R, simply type the name of that object at the command prompt.
 
 ```{r results='hide'}
 penguin
@@ -204,7 +208,7 @@ str(penguin)
 str(penguin)
 ```
 
-You can write out dataframes to csv files with `write.csv()`. Here we'll write the penguin data back out to a new file (normally, we'd only do this after transforming or working with the data, but this is just an example). Once you've run this, check the `data` folder to make sure the new file has been created.
+You can write out dataframes to csv files with `write.csv()`. As an example, we'll write the penguin data back out to a new file (normally, we'd only do this after transforming or working with the data). Once you've run this, check the `data` folder to make sure the new file has been created.
 
 ```{r}
 write.csv(penguin, "./data/penguin2.csv", row.names = FALSE)
@@ -281,6 +285,7 @@ Matrices in R are index by `[row,col]`, so you need to provide both of these to 
 
 ```{r}
 x <- matrix(seq(2, 24, by = 2), nrow = 3, ncol = 4)
+x
 ```
 
 To get the very first entry, we index it with `[1,1]`:
@@ -295,7 +300,7 @@ And to get the last:
 x[3,4]
 ```
 
-If you only provide one index, then it will extract all values for that row/columns:
+If you only provide one index, then it will extract all values for that row/column:
 
 ```{r}
 x[1,] # first row
@@ -331,7 +336,7 @@ penguin[1:10, ]    # First 10 rows
 penguin[1:50,1:2]  # First 50 rows of the first two columns
 ```
 
-Dataframes also use a `$` notation, which allows to access individual columns or variables. For example, to extract the bill length variable:
+Where dataframes differ is in the use of the `$` notation. This allows you to access individual columns or variables. For example, to extract the bill length variable:
 
 ```{r}
 names(penguin)
@@ -341,7 +346,7 @@ names(penguin)
 penguin$bill_length_mm  	# Extract single column
 ```
 
-The advantage of this is that you can access a column, even if you don't know wthe column number.  You can also combine this with the vector indexing (see above) to access specific values within a vector:
+The advantage of this is that you can access a column, even if you don't know the column number. You can also combine this with the vector indexing (see above) to access specific values within a vector:
 
 ```{r results='hide'}
 penguin$bill_length_mm[3]      # 3rd element
@@ -354,7 +359,7 @@ Logical operators $<, <=, >, >=, ==, !=$ can be used to select parts of the data
 ```{r results='hide'}
 penguin$bill_length_mm[penguin$bill_length_mm > 40]	# All bill lengths over 40 mm
 penguin[penguin$bill_length_mm > 40, ]	# All columns with bill length length over 40 
-penguin$bill_length_mm[(penguin$species == 'Adelie')] 	# All "Adelie" penguins
+penguin$bill_length_mm[(penguin$species == 'Adelie')] 	# Bill lengths for "Adelie" penguins
 penguin[(penguin$species == 'Adelie'), ] 	# All columns for "Adelie" penguins
 ```
 
@@ -457,7 +462,7 @@ penguin %>%
   head()
 ```
 
-To select all columns that start with the character string "`bill`", use the function `starts_with()`
+To select all columns that start with the character string "`bill`", use the function `starts_with()`:
 
 ```{r results='hide'}
 penguin %>%
@@ -477,17 +482,17 @@ The `filter()` function allows the selection of rows. To filter the data for row
 
 ```{r results='hide'}
 penguin %>% 
-  filter(body_mass_g > 65)
+  filter(body_mass_g > 4000)
 ```
 
-You can add mulitple conditions in the filter function. For example, to filter for male penguins with a body mass of over 4000 g:
+You can add multiple conditions in the filter function. For example, to filter for male penguins with a body mass of over 4000 g:
 
 ```{r results='hide'}
 penguin %>%
   filter(sex == "male", body_mass_g > 4000)
 ```
 
-To filter for male penguins with a body mass of over 4000 g, and are from Torgensen island: 
+To filter for male penguins with a body mass of over 4000 g, and are from Biscoe island: 
 
 ```{r results='hide'}
 penguin %>%
@@ -501,7 +506,7 @@ penguin %>%
   filter(sex == "female", island %in% c("Biscoe","Torgensen"))
 ```
 
-Note that there is also a `slice()` function, which simply extracts rows according to their position - this is the equivalent to the indexing we have done before:
+Note that there is also a `slice()` function, which simply extracts rows according to their position - this is the equivalent to the row indexing we looked at before:
 
 ```{r}
 penguin %>%
@@ -583,8 +588,7 @@ And let's sort by this by weight to find the islands with the highest masses:
 penguin %>% 
   select(island, body_mass_g) %>%
   mutate(body_mass_kg = body_mass_g / 1000) %>%
-  arrange(desc(body_mass_kg)) %>%
-  head()
+  arrange(desc(body_mass_kg)) 
 ```
 
 Note that this does **not** add the column to the original dataframe, unless you assign the output:
@@ -595,7 +599,7 @@ penguin <- penguin %>%
 names(penguin)
 ```
 
-We'll look at a couple of other **dplyr** functions, shortly, but first, we'll explore what an R function.
+We'll look at a couple of other **dplyr** functions shortly, but first, we'll explore what an R function is.
 
 # Functions in R
 
@@ -630,33 +634,33 @@ To find out what these arguments are, what they are called and what values they 
 
 ## Univariate statistics
 
-R has a large number of inbuilt functions. This section is designed to simply introduce you to the some basic functions for estimating simple univariate statistics We'll start by simply calculating the mean of the bill length values
+R has a large number of in-built functions. This section is designed to simply introduce you to the some basic functions for estimating simple univariate statistics We'll start by simply calculating the mean of the bill length values
 
 ```{r}
 mean(penguin$bill_length_mm)
 ```
 
-This returns the value `NA`, rather than a mean length. So what went wrong? In the original set of data, there are some missing values, also denoted by `NA`. 
+This returns the value `NA`, rather than a mean length. So what went wrong? In the original set of data, there are some missing values, also denoted by `NA`. For example, here are the first 10 values: 
 
 ```{r}
 penguin$bill_length_mm[1:15]
 ```
 
-R's default for most functions is to not calculate values when there are missing observations. This is really to alert you to the fact that the data are incomplete, and the value you would obtain might be biased. You can overrule this by adding the argument `na.rm=TRUE` to the following functions. This removes `NA`s and calculates the value with whatever is leftover.
+R's default for most functions is to not calculate values when there are missing observations. This is really to alert you to the fact that the data are incomplete, and the value you would obtain might be biased. You can overrule this by adding the argument `na.rm=TRUE` to most functions. This removes `NA`s and calculates the value with whatever is leftover.
 
 Functions to describe the central tendency:
 
 ```{r}
 mean(penguin$bill_length_mm, na.rm = TRUE)
-median(penguin$bill_length_mm)
+median(penguin$bill_length_mm, na.rm = TRUE)
 ```
 
 Functions to describe the dispersion (output not shown):
 
 ```{r results='hide'}
 sd(penguin$bill_length_mm, na.rm = TRUE) ## Standard deviation
-var(penguin$bill_length_mm) ## Variance
-min(penguin$bill_length_mm)
+var(penguin$bill_length_mm, na.rm = TRUE) ## Variance
+min(penguin$bill_length_mm, na.rm = TRUE)
 max(penguin$bill_length_mm, na.rm = TRUE)
 quantile(penguin$bill_length_mm, na.rm = TRUE)
 ```
@@ -691,21 +695,21 @@ These functions can be used with the **dplyr** function `summarize()` to create 
 
 ```{r}
 penguin %>% 
-    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE))
+    summarize(avg_body_mass = mean(body_mass_kg, na.rm = TRUE))
 ```
 
 You can use most of the functions that calculate summary statistics described above. There are a number of others that are useful here, including `n()` to ge the length of a vector:
 
 ```{r}
 penguin %>% 
-    summarise(count = n())
+    summarize(count = n())
 ```
 
 And `n_distinct()` returns the number of distinct values in vector. 
 
 ```{r}
 penguin %>% 
-    summarise(count_islands = n_distinct(island),
+    summarize(count_islands = n_distinct(island),
               count_species = n_distinct(species))
 ```
 
@@ -713,7 +717,7 @@ We can then easily set up a function to calculate a range of summary statistics 
 
 ```{r}
 penguin %>% 
-    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE),
+    summarize(avg_body_mass = mean(body_mass_kg, na.rm = TRUE),
               sd_body_mass = sd(body_mass_kg, na.rm = TRUE),
               min_body_mass = min(body_mass_kg, na.rm = TRUE),
               max_body_mass = max(body_mass_kg, na.rm = TRUE))
@@ -730,7 +734,7 @@ Let’s do that: split the `penguin` data frame by species, calculate summary st
 ```{r}
 penguin %>% 
   group_by(species) %>%
-    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE),
+    summarize(avg_body_mass = mean(body_mass_kg, na.rm = TRUE),
               sd_body_mass = sd(body_mass_kg, na.rm = TRUE),
               min_body_mass = min(body_mass_kg, na.rm = TRUE),
               max_body_mass = max(body_mass_kg, na.rm = TRUE))
@@ -741,7 +745,7 @@ We can also group by two variables, here, we'll just calculate the mean body mas
 ```{r results='hide'}
 penguin %>% 
   group_by(species, island) %>%
-    summarise(avg_body_mass = mean(body_mass_kg, na.rm = TRUE)) %>%
+    summarize(avg_body_mass = mean(body_mass_kg, na.rm = TRUE)) %>%
   arrange(avg_body_mass)
 ```
 
@@ -768,7 +772,7 @@ plot(penguin$bill_length_mm, penguin$bill_depth_mm,
      col = penguin$species, pch = 16)
 ```
 
-Let's clean up this plot a little by specifying the axis labels and a title:
+Let's clean up this plot a little by specifying the axis labels and a title (`main`):
 
 ```{r eval=FALSE}
 plot(penguin$bill_length_mm, penguin$bill_depth_mm,
@@ -853,7 +857,7 @@ The **ggplot2** package forms part of the tidyverse set of packages, and impleme
 library(ggplot2)
 ```
 
-In order to understand how `ggplot` makes a figure, we need to establish what the fundamental parts are of every data graph. They are:
+In order to understand how `ggplot` makes a figure, we need to establish what the fundamental parts of data graphics are. These can include:
 
 1. *Aesthetics* – these are the roles that the variables play in each graph. A variable may control where points appear, the color or shape of a point, the height of a bar and so on.
 2. *Geometries* – these are the geometric objects which represent the data: points, lines, bars, ...
@@ -861,7 +865,7 @@ In order to understand how `ggplot` makes a figure, we need to establish what th
 4. *Scales* – these are legends that show the relationship between variables and different symbols or colors (e.g. circular symbols represent females while squares represent males)
 5. *Facets* – these are groups in your data which may be used to make multiple graphs, each for one of the groups. For example, faceting by gender would cause the graph to repeat for the two genders.
 
-When making a `ggplot` figure, we generally start by creating the base figure. To do this we need to tell the function where the data is coming from, and the base aesthetic (i.e. which variable is `x`, which is `y`?). To remake the first scatter plot with `ggplot()`, we start by doing the following:
+When making a `ggplot` figure, we generally start by creating the base figure. To do this we need to tell the function where the data is coming from, and the base aesthetic (i.e. which variable is `x`, which is `y`, are we using a variable to define colors?). To remake the first scatter plot with `ggplot()`, we start by doing the following:
 
 ```{r}
 ggplot(penguin, aes(x = bill_length_mm, y=bill_depth_mm))
@@ -938,7 +942,8 @@ ggplot(aes(x = bill_length_mm,
   theme_bw() +
   facet_wrap(~year) 
 ```
-In addition to the points, **ggplot2** has several other geometries for lines, barplots, histograms, polygons, and even maps (we'll look at this later). Here's just a few examples:
+
+Note that, in addition to the points, **ggplot2** has several other geometries for lines, barplots, histograms, polygons, and even maps (we'll look at this later). Here's just a few examples:
 
 - Histograms
 
@@ -946,12 +951,14 @@ In addition to the points, **ggplot2** has several other geometries for lines, b
 ggplot(penguin, aes(x = bill_length_mm)) +
   geom_histogram()
 ```
+
 - Histograms by class (species) with transparency (`alpha`)
 
 ```{r warning=FALSE}
 ggplot(penguin, aes(x = bill_length_mm, fill = species)) +
   geom_histogram(position = 'identity', alpha = 0.7)
 ```
+
 - Boxplots
 
 ```{r}
